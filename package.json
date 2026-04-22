@@ -9,13 +9,25 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/lab": "^9.0.0-beta.2",
+    "@mui/material": "^9.0.0",
+    "@mui/x-date-pickers": "^9.0.2",
+    "@mui/x-date-pickers-pro": "^9.0.2",
+    "dayjs": "^1.11.20",
     "next": "16.2.4",
+    "next-themes": "^0.4.6",
+    "oracledb": "^6.10.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.72.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/oracledb": "^6.10.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

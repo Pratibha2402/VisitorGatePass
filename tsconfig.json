@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
+    //"baseUrl": ".",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -19,8 +20,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": ["./*"],
+      "@/core-components": ["./app/core-components"],
+      "@/core-components/*": ["./app/core-components/*"]
+    },
+
+    //"downlevelIteration": true
   },
   "include": [
     "next-env.d.ts",
