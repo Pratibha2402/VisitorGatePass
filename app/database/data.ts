@@ -8,12 +8,20 @@ type Employee = {
   NAME: string;
   DESIG: string;
   DEPT: string;
+  GRADE: string;
   EMAILID: string;
   MOBILE: number;
   USERNAME: string;
 };
 
 type ApprovingAuthority = {
+  EMPNO: number;
+  NAME: string;
+  DESIG: string;
+  DEPT: string;
+};
+
+type VehicleApprovingAuthority = {
   EMPNO: number;
   NAME: string;
   DESIG: string;
@@ -111,12 +119,108 @@ export async function fetchApprovingAuthority(empno: string) {
   }
 }
 
+export async function fetchapprovingAuthorityVehicle(empno: string) {
+  try {
+    const sql = `
+      WITH 
+emp_base AS (
+    -- Get employee base details once
+    SELECT 
+        EMPNO,
+        DEPT_CD,
+        CONTROLLING_OFFICER
+    FROM MISC.M_EMPLOYEE_ALL
+    WHERE EMPNO = :empno
+),
+
+hierarchy (
+    EMPNO,
+    NAME,
+    DESIG,
+    DEPT,
+    GRADE,
+    CONTROLLING_OFFICER,
+    LVL
+) AS (
+    -- Anchor
+    SELECT 
+        co.EMPNO,
+        co.NAME,
+        co.DESIG,
+        co.DEPT,
+        co.GRADE,
+        co.CONTROLLING_OFFICER,
+        1
+    FROM MISC.M_EMPLOYEE_ALL co
+    JOIN emp_base eb 
+        ON co.EMPNO = eb.CONTROLLING_OFFICER
+    WHERE co.RND_STATUS = :status
+      AND co.IS_EMPLOYEE = :isEmployee
+
+    UNION ALL
+
+    -- Recursive
+    SELECT 
+        p.EMPNO,
+        p.NAME,
+        p.DESIG,
+        p.DEPT,
+        p.GRADE,
+        p.CONTROLLING_OFFICER,
+        h.LVL + 1
+    FROM MISC.M_EMPLOYEE_ALL p
+    JOIN hierarchy h 
+        ON p.EMPNO = h.CONTROLLING_OFFICER
+    WHERE p.RND_STATUS = :status
+      AND p.IS_EMPLOYEE = :isEmployee
+),
+
+-- Filter only H & I once
+hierarchy_filtered AS (
+    SELECT EMPNO, NAME, DESIG, DEPT
+    FROM hierarchy
+    WHERE GRADE IN ('H','I')
+)
+
+-- Final result
+SELECT EMPNO, NAME, DESIG, DEPT
+FROM hierarchy_filtered
+
+UNION   -- use UNION (not ALL) to auto-remove duplicates
+
+SELECT 
+    e2.EMPNO,
+    e2.NAME,
+    e2.DESIG,
+    e2.DEPT
+FROM MISC.M_VISITOR_GATEPASS_VEHICLE_HODS h
+JOIN emp_base eb 
+    ON h.DEPT_CD = eb.DEPT_CD
+JOIN MISC.M_EMPLOYEE_ALL e2 
+    ON e2.EMPNO = h.HOD_EMP_ID
+WHERE e2.RND_STATUS = :status
+  AND e2.IS_EMPLOYEE = :isEmployee
+
+ORDER BY NAME
+    `;
+
+    return await executeQuery<VehicleApprovingAuthority>(sql, {
+      empno,
+      status: "ACTIVE",
+      isEmployee: 1,
+    });
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch employees' data.");
+  }
+}
+
 
 
 export async function fetchEmployeebyUsername(username: string) {
   try {
     const sql = `
-      SELECT EMPNO, NAME, DESIG, DEPT, EMAILID, MOBILE, USERNAME 
+      SELECT EMPNO, NAME, DESIG, DEPT,GRADE, EMAILID, MOBILE, USERNAME 
       FROM MISC.M_EMPLOYEE_ALL
       WHERE username = :username and RND_STATUS = :status
         AND IS_EMPLOYEE = :isEmployee
@@ -136,4 +240,4 @@ export async function fetchEmployeebyUsername(username: string) {
   }
 }
 
-export type { ApprovingAuthority, Employee };
+export type { ApprovingAuthority, Employee,VehicleApprovingAuthority };

@@ -12,15 +12,26 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { TITLE, GENDER, NATIONALITY } from "@/app/enum";
+import {
+  TITLE,
+  GENDER,
+  NATIONALITY,
+  VEHICLENTRY,
+  LAPTOPCARRYOPTIONS,
+} from "@/app/enum";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { type ApprovingAuthority, type Employee } from "@/app/database/data";
+import {
+  type ApprovingAuthority,
+  type Employee,
+  type VehicleApprovingAuthority,
+} from "@/app/database/data";
 
 type VisitorFormProps = {
   loggedinUser: Employee | null;
   approvingAuthority: ApprovingAuthority[] | null;
-  allActiveRndEmployees: Employee[] | null;
+  approvingAuthorityVehicle: VehicleApprovingAuthority[] | null;
+  // allActiveRndEmployees: Employee[] | null;
 };
 
 type VisitorFormValues = {
@@ -32,7 +43,7 @@ type VisitorFormValues = {
   fromdate: Date | null;
   todate: Date | null;
   vehicleentry: string;
-  approvingAuthority: ApprovingAuthority | null;
+  approvingAuthority: ApprovingAuthority | VehicleApprovingAuthority | null;
   company: string;
   title: string;
   name: string;
@@ -42,12 +53,14 @@ type VisitorFormValues = {
   phone: string;
   gender: string;
   nationality: string;
+  laptopcarry: string;
 };
 
 const titleOptions = Object.values(TITLE);
 const genderOptions = Object.values(GENDER);
 const nationalityOptions = Object.values(NATIONALITY);
-
+const vehicleOptions = Object.values(VEHICLENTRY);
+const laptopcarryOptions = Object.values(LAPTOPCARRYOPTIONS);
 const defaultValues: VisitorFormValues = {
   officerName: "",
   designation: "",
@@ -57,6 +70,8 @@ const defaultValues: VisitorFormValues = {
   fromdate: null,
   todate: null,
   vehicleentry: "No",
+  laptopcarry: "No",
+
   approvingAuthority: null,
   company: "",
   title: titleOptions[0],
@@ -72,7 +87,7 @@ const defaultValues: VisitorFormValues = {
 export default function VisitorForm({
   loggedinUser,
   approvingAuthority,
-  allActiveRndEmployees,
+  approvingAuthorityVehicle,
 }: VisitorFormProps) {
   const {
     control,
@@ -86,36 +101,48 @@ export default function VisitorForm({
   });
 
   const [loading, setLoading] = useState(false);
+
   const isVehicleEntry = watch("vehicleentry");
+
+  const requiresManualApproval = ["A", "B", "C"].includes(
+    loggedinUser?.GRADE || "",
+  );
+  // const isAutoApproval = isVehicleEntry === "No" && !requiresManualApproval;
+  const showApprovingAuthority =
+    isVehicleEntry === "Yes" || requiresManualApproval;
+
   const currentApprovingAuthorities = useMemo(
     () => approvingAuthority ?? [],
     [approvingAuthority],
   );
-  const currentActiveEmployees = useMemo(
-    () => allActiveRndEmployees ?? [],
-    [allActiveRndEmployees],
+  const vehicleApprovingAuthorities = useMemo(
+    () => approvingAuthorityVehicle ?? [],
+    [approvingAuthorityVehicle],
   );
   const currentOptions =
     isVehicleEntry === "Yes"
-      ? currentActiveEmployees
-      : currentApprovingAuthorities;
+      ? vehicleApprovingAuthorities
+      : requiresManualApproval
+        ? currentApprovingAuthorities
+        : [];
 
+  /* set value for logged in user details on form load */
+  useEffect(() => {
+    if (!loggedinUser) return;
+
+    setValue("officerName", loggedinUser.NAME || "");
+    setValue("designation", loggedinUser.DESIG || "");
+    setValue("department", loggedinUser.DEPT || "");
+  }, [loggedinUser, setValue]);
+
+  /* set value for approving authority based on vehicle entry and approval requirement */
   useEffect(() => {
     if (!loggedinUser) {
       return;
     }
 
-    reset({
-      ...defaultValues,
-      officerName: loggedinUser.NAME || "",
-      designation: loggedinUser.DESIG || "",
-      department: loggedinUser.DEPT || "",
-    });
-  }, [loggedinUser, reset]);
-
-  useEffect(() => {
     if (isVehicleEntry === "Yes") {
-      const employee = currentActiveEmployees[0];
+      const employee = vehicleApprovingAuthorities[0] ?? null;
 
       if (employee) {
         setValue("approvingAuthority", {
@@ -131,13 +158,20 @@ export default function VisitorForm({
       return;
     }
 
-    setValue("approvingAuthority", currentApprovingAuthorities[0] || null);
-  }, [
-    isVehicleEntry,
-    currentApprovingAuthorities,
-    currentActiveEmployees,
-    setValue,
-  ]);
+    if (requiresManualApproval) {
+      // setValue("approvingAuthority", null);
+      return;
+    }
+
+    setValue("approvingAuthority", {
+      EMPNO: loggedinUser.EMPNO,
+      NAME: loggedinUser.NAME,
+      DESIG: loggedinUser.DESIG,
+      DEPT: loggedinUser.DEPT,
+    });
+
+    //setValue("approvingAuthority", currentApprovingAuthorities[0] || null);
+  }, [isVehicleEntry, loggedinUser, vehicleApprovingAuthorities, setValue]);
 
   const onSubmit = async (data: VisitorFormValues) => {
     setLoading(true);
@@ -217,27 +251,30 @@ export default function VisitorForm({
                 name="vehicleentry"
                 label="Vehicle Entry Required?"
                 control={control}
-                options={["Yes", "No"]}
+                options={vehicleOptions}
                 getOptionLabel={(option: string) => option}
                 isOptionEqualToValue={(option: string, value: string | null) =>
                   option === value
                 }
                 disableClearable
               />
-              <FormAutocomplete
-                name="approvingAuthority"
-                label="Approving Authority"
-                control={control}
-                options={currentOptions}
-                getOptionLabel={(option: ApprovingAuthority | Employee | null) =>
-                  option ? `${option.NAME} (${option.DESIG})` : ""
-                }
-                isOptionEqualToValue={(
-                  option: ApprovingAuthority | Employee,
-                  value: ApprovingAuthority | Employee | null,
-                ) => option.EMPNO === value?.EMPNO}
-                disableClearable
-              />
+
+              {showApprovingAuthority && (
+                <FormAutocomplete
+                  name="approvingAuthority"
+                  label="Approving Authority"
+                  control={control}
+                  options={currentOptions}
+                  getOptionLabel={(
+                    option: ApprovingAuthority | Employee | null,
+                  ) => (option ? `${option.NAME} (${option.DESIG})` : "")}
+                  isOptionEqualToValue={(
+                    option: ApprovingAuthority | Employee,
+                    value: ApprovingAuthority | Employee | null,
+                  ) => option.EMPNO === value?.EMPNO}
+                  disableClearable
+                />
+              )}
             </Box>
           </div>
 
@@ -332,6 +369,18 @@ export default function VisitorForm({
                 label="Nationality"
                 control={control}
                 options={nationalityOptions}
+                getOptionLabel={(option: string) => option}
+                isOptionEqualToValue={(option: string, value: string | null) =>
+                  option === value
+                }
+                disableClearable
+              />
+
+              <FormAutocomplete
+                name="laptopcarry"
+                label="Is Visitor Carrying Laptop?"
+                control={control}
+                options={laptopcarryOptions}
                 getOptionLabel={(option: string) => option}
                 isOptionEqualToValue={(option: string, value: string | null) =>
                   option === value

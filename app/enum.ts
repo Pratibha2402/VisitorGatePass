@@ -14,4 +14,12 @@ export const TITLE = {
    indian: "Indian",
    other : "Other",
 };
+  export const VEHICLENTRY = {
+   yes: "Yes",
+   No : "No",
+};
  
+  export const LAPTOPCARRYOPTIONS = {
+   yes: "Yes",
+   No : "No",
+};
