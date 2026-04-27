@@ -1,5 +1,4 @@
 import { Icon } from "@mui/material";
-import type { SvgIconComponent } from "@mui/icons-material";
 
 export default function Page({
   title,
@@ -7,7 +6,7 @@ export default function Page({
   children,
 }: {
   title?: string;
-  icon?: SvgIconComponent;
+  icon?: any;
   children: React.ReactNode;
 }) {
   return (

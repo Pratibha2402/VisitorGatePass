@@ -1,4 +1,8 @@
 "use client";
+import SaveIcon from "@mui/icons-material/Save";
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import {
   Box,
@@ -8,6 +12,16 @@ import {
   FormTextField,
   Typography,
   useForm,
+  DataGrid,
+  GridColDef,
+  GridRowModes,
+  type GridRowParams,
+  type GridRowModesModel,
+  type GridRowId,
+  GridActionsCellItem,
+  type GridEventListener,
+  GridRowEditStopReasons,
+  type GridPreProcessEditCellProps,
 } from "@/app/core-components";
 import { useEffect, useMemo, useState } from "react";
 import Stack from "@mui/material/Stack";
@@ -27,33 +41,13 @@ import {
   type VehicleApprovingAuthority,
 } from "@/app/database/data";
 
+import { VisitorFormValues, VisitorGridRow } from "@/app/type";
+
 type VisitorFormProps = {
   loggedinUser: Employee | null;
   approvingAuthority: ApprovingAuthority[] | null;
   approvingAuthorityVehicle: VehicleApprovingAuthority[] | null;
   // allActiveRndEmployees: Employee[] | null;
-};
-
-type VisitorFormValues = {
-  officerName: string;
-  designation: string;
-  department: string;
-  intercom: string;
-  purpose: string;
-  fromdate: Date | null;
-  todate: Date | null;
-  vehicleentry: string;
-  approvingAuthority: ApprovingAuthority | VehicleApprovingAuthority | null;
-  company: string;
-  title: string;
-  name: string;
-  address1: string;
-  address2: string;
-  age: string;
-  phone: string;
-  gender: string;
-  nationality: string;
-  laptopcarry: string;
 };
 
 const titleOptions = Object.values(TITLE);
@@ -91,7 +85,7 @@ export default function VisitorForm({
 }: VisitorFormProps) {
   const {
     control,
-    reset,
+    getValues,
     watch,
     setValue,
     formState: { errors },
@@ -101,6 +95,10 @@ export default function VisitorForm({
   });
 
   const [loading, setLoading] = useState(false);
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const [gridError, setGridError] = useState("");
+
+  const [rows, setRows] = useState<VisitorGridRow[]>([]);
 
   const isVehicleEntry = watch("vehicleentry");
 
@@ -142,24 +140,26 @@ export default function VisitorForm({
     }
 
     if (isVehicleEntry === "Yes") {
-      const employee = vehicleApprovingAuthorities[0] ?? null;
-
-      if (employee) {
-        setValue("approvingAuthority", {
-          EMPNO: employee.EMPNO,
-          NAME: employee.NAME,
-          DESIG: employee.DESIG,
-          DEPT: employee.DEPT,
-        });
-      } else {
-        setValue("approvingAuthority", null);
-      }
-
+      setValue("approvingAuthority", null);
       return;
+      // const employee = vehicleApprovingAuthorities[0] ?? null;
+
+      // if (employee) {
+      //   setValue("approvingAuthority", {
+      //     EMPNO: employee.EMPNO,
+      //     NAME: employee.NAME,
+      //     DESIG: employee.DESIG,
+      //     DEPT: employee.DEPT,
+      //   });
+      // } else {
+      //   setValue("approvingAuthority", null);
+      // }
+
+      // return;
     }
 
     if (requiresManualApproval) {
-      // setValue("approvingAuthority", null);
+      setValue("approvingAuthority", null);
       return;
     }
 
@@ -173,13 +173,258 @@ export default function VisitorForm({
     //setValue("approvingAuthority", currentApprovingAuthorities[0] || null);
   }, [isVehicleEntry, loggedinUser, vehicleApprovingAuthorities, setValue]);
 
-  const onSubmit = async (data: VisitorFormValues) => {
-    setLoading(true);
-    console.log("Form Data:", data);
+  const buildVisitorRow = (
+    data: VisitorFormValues,
+    id: number,
+  ): VisitorGridRow => ({
+    id,
+    company: data.company,
+    title: data.title,
+    name: data.name,
+    address1: data.address1,
+    address2: data.address2,
+    age: data.age,
+    phone: data.phone,
+    gender: data.gender,
+    nationality: data.nationality,
+    laptopcarry: data.laptopcarry,
+  });
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+  const normalize = (value: string) => value.trim().toLowerCase();
+
+  const isDuplicateVisitor = (data: VisitorFormValues) => {
+    return rows.some((row) => {
+      return (
+        normalize(row.name) === normalize(data.name) &&
+        normalize(row.phone) === normalize(data.phone) &&
+        normalize(row.company) === normalize(data.company)
+      );
+    });
+  };
+
+  const onSubmit = async (data: VisitorFormValues) => {
+    if (isDuplicateVisitor(data)) {
+      alert("This visitor is already added.");
+      return;
+    }
+    setLoading(true);
+
+    const newId =
+      rows.length > 0 ? Math.max(...rows.map((row) => row.id)) + 1 : 1;
+
+    const newRow = buildVisitorRow(data, newId);
+
+    setRows((prev) => [...prev, newRow]);
+
+    setValue("title", titleOptions[0]);
+    setValue("name", "");
+    setValue("address1", "");
+    setValue("address2", "");
+    setValue("age", "");
+    setValue("phone", "");
+    setValue("gender", genderOptions[0]);
+    setValue("nationality", nationalityOptions[0]);
+    setValue("laptopcarry", "No");
+
+    setLoading(false);
+  };
+
+  const handleRowEditStop: GridEventListener<"rowEditStop"> = (
+    params,
+    event,
+  ) => {
+    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+      event.defaultMuiPrevented = true;
+    }
+  };
+  const handleEditClick = (id: GridRowId) => {
+    setRowModesModel((prev) => ({
+      ...prev,
+      [id]: { mode: GridRowModes.Edit },
+    }));
+  };
+  const handleSaveClick = (id: GridRowId) => {
+    setRowModesModel((prev) => ({
+      ...prev,
+      [id]: { mode: GridRowModes.View },
+    }));
+  };
+  const handleCancelClick = (id: GridRowId) => {
+    setRowModesModel((prev) => ({
+      ...prev,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    }));
+  };
+
+  const handleDeleteRow = (id: number) => {
+    setRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
+  const handleProcessRowUpdate = (newRow: VisitorGridRow) => {
+    console.log("trying to save row", newRow);
+    if (!/^\d{10}$/.test(newRow.phone)) {
+      throw new Error("Contact number must be exactly 10 digits");
+    }
+
+    if (
+      !/^\d+$/.test(newRow.age) ||
+      Number(newRow.age) < 1 ||
+      Number(newRow.age) > 120
+    ) {
+      throw new Error("Age must be a valid number between 1 and 120");
+    }
+
+    setRows((prev) => prev.map((row) => (row.id === newRow.id ? newRow : row)));
+
+    return newRow;
+  };
+
+  const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
+    setRowModesModel(newRowModesModel);
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "company",
+      headerName: "Company",
+      flex: 1,
+      minWidth: 150,
+      editable: true,
+    },
+    {
+      field: "title",
+      headerName: "Title",
+      width: 100,
+      type: "singleSelect",
+      valueOptions: titleOptions,
+      editable: true,
+    },
+    {
+      field: "name",
+      headerName: "Visitor Name",
+      flex: 1,
+      minWidth: 180,
+      editable: true,
+    },
+
+    {
+      field: "address1",
+      headerName: "Address 1",
+      flex: 1,
+      minWidth: 180,
+      editable: true,
+    },
+    {
+      field: "address2",
+      headerName: "Address 2",
+      flex: 1,
+      minWidth: 180,
+      editable: true,
+    },
+    {
+      field: "age",
+      headerName: "Age",
+      width: 90,
+      editable: true,
+    },
+
+    {
+      field: "phone",
+      headerName: "Phone",
+      width: 140,
+      editable: true,
+    },
+
+    {
+      field: "gender",
+      headerName: "Gender",
+      width: 120,
+      type: "singleSelect",
+      valueOptions: genderOptions,
+      editable: true,
+    },
+
+    {
+      field: "nationality",
+      headerName: "Nationality",
+      width: 140,
+      type: "singleSelect",
+      valueOptions: nationalityOptions,
+      editable: true,
+    },
+    {
+      field: "laptopcarry",
+      headerName: "Laptop Carry",
+      width: 140,
+      type: "singleSelect",
+      valueOptions: laptopcarryOptions,
+      editable: true,
+    },
+    {
+      field: "actions",
+      type: "actions",
+      headerName: "Actions",
+      width: 140,
+      getActions: ({ id }: GridRowParams) => {
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem
+              key="save"
+              icon={<SaveIcon />}
+              label="Save"
+              onClick={() => handleSaveClick(id)}
+              showInMenu={false}
+            />,
+            <GridActionsCellItem
+              key="cancel"
+              icon={<CloseIcon />}
+              label="Cancel"
+              onClick={() => handleCancelClick(id)}
+              showInMenu={false}
+            />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem
+            key="edit"
+            icon={<EditIcon />}
+            label="Edit"
+            onClick={() => handleEditClick(id)}
+            showInMenu={false}
+          />,
+          <GridActionsCellItem
+            key="delete"
+            icon={<DeleteIcon />}
+            label="Delete"
+            onClick={() => handleDeleteRow(Number(id))}
+            showInMenu={false}
+          />,
+        ];
+      },
+    },
+  ];
+
+  const handleSaveAllVisitors = async () => {
+    const formValues = getValues();
+    const payload = {
+      officerDetails: {
+        officerName: formValues.officerName,
+        designation: formValues.designation,
+        department: formValues.department,
+        intercom: formValues.intercom,
+        purpose: formValues.purpose,
+        fromdate: formValues.fromdate,
+        todate: formValues.todate,
+        vehicleentry: formValues.vehicleentry,
+        approvingAuthority: formValues.approvingAuthority,
+      },
+      visitors: rows,
+    };
+
+    console.log("Visitor request payload:", payload);
   };
 
   return (
@@ -227,9 +472,16 @@ export default function VisitorForm({
                 name="intercom"
                 label="Intercom No"
                 control={control}
-                rules={{ required: true }}
+                rules={{
+                  required: "Intercom number is required",
+                  pattern: {
+                    value: /^\d+$/,
+                    message: "Intercom must contain digits only",
+                  },
+                }}
                 error={errors.intercom}
               />
+
               <FormDateTimePicker
                 name="fromdate"
                 label="From Date"
@@ -265,6 +517,8 @@ export default function VisitorForm({
                   label="Approving Authority"
                   control={control}
                   options={currentOptions}
+                  rules={{ required: true }}
+                  error={errors.approvingAuthority}
                   getOptionLabel={(
                     option: ApprovingAuthority | Employee | null,
                   ) => (option ? `${option.NAME} (${option.DESIG})` : "")}
@@ -340,7 +594,19 @@ export default function VisitorForm({
                 name="age"
                 label="Age"
                 control={control}
-                rules={{ required: true }}
+                rules={{
+                  required: "Age is required",
+                  pattern: {
+                    value: /^\d+$/,
+                    message: "Age must contain digits only",
+                  },
+                  validate: (value: string) => {
+                    const age = Number(value);
+                    if (age < 1) return "Age must be greater than 0";
+                    if (age > 120) return "Age must be 120 or less";
+                    return true;
+                  },
+                }}
                 error={errors.age}
               />
 
@@ -348,7 +614,13 @@ export default function VisitorForm({
                 name="phone"
                 label="Contact Number"
                 control={control}
-                rules={{ required: true }}
+                rules={{
+                  required: "Contact number is required",
+                  pattern: {
+                    value: /^\d{10}$/,
+                    message: "Contact number must be exactly 10 digits",
+                  },
+                }}
                 error={errors.phone}
               />
 
@@ -405,8 +677,47 @@ export default function VisitorForm({
                 <CircularProgress color="inherit" size={24} />
               </Stack>
             ) : (
-              "Submit Visitor"
+              "Add Visitor"
             )}
+          </Button>
+
+          <div className="mt-8">
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              Added Visitors
+            </Typography>
+            {/* {gridError && (
+              <Typography color="error" sx={{ mb: 1 }}>
+                {gridError}
+              </Typography>
+            )} */}
+
+            <Box sx={{ width: "100%" }}>
+              <DataGrid
+                rows={rows}
+                columns={columns}
+                editMode="row"
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={handleRowModesModelChange}
+                onRowEditStop={handleRowEditStop}
+                processRowUpdate={handleProcessRowUpdate}
+                onProcessRowUpdateError={(error) => console.error(error)}
+                disableRowSelectionOnClick
+                pageSizeOptions={[5, 10, 20]}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 5, page: 0 },
+                  },
+                }}
+              />
+            </Box>
+          </div>
+
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSaveAllVisitors}
+          >
+            Submit All Visitors
           </Button>
         </div>
       </form>

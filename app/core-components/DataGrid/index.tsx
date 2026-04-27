@@ -15,6 +15,14 @@ import {
   GridToolbarDensitySelector,
   GridToolbar,
   DataGridProps,
+  GridRowModes,
+  type GridRowModesModel,
+  type GridRowId,
+  GridActionsCellItem,
+  type GridEventListener,
+  type GridRowParams,
+  type GridPreProcessEditCellProps,
+  GridRowEditStopReasons,
 } from "@mui/x-data-grid";
 
 function DataGrid(props: DataGridProps) {
@@ -53,4 +61,18 @@ export {
   GridToolbar,
 };
 
-export type { GridColDef, GridRowsProp } from "@mui/x-data-grid";
+export {
+  GridColDef,
+  GridRowsProp,
+  GridRowModes,
+  GridRowEditStopReasons,
+  GridActionsCellItem,
+};
+
+export type {
+  GridRowModesModel,
+  GridRowId,
+  GridEventListener,
+  GridRowParams,
+  GridPreProcessEditCellProps,
+};
