@@ -21,7 +21,6 @@ import {
   GridActionsCellItem,
   type GridEventListener,
   GridRowEditStopReasons,
-  type GridPreProcessEditCellProps,
 } from "@/app/core-components";
 import { useEffect, useMemo, useState } from "react";
 import Stack from "@mui/material/Stack";
@@ -142,20 +141,6 @@ export default function VisitorForm({
     if (isVehicleEntry === "Yes") {
       setValue("approvingAuthority", null);
       return;
-      // const employee = vehicleApprovingAuthorities[0] ?? null;
-
-      // if (employee) {
-      //   setValue("approvingAuthority", {
-      //     EMPNO: employee.EMPNO,
-      //     NAME: employee.NAME,
-      //     DESIG: employee.DESIG,
-      //     DEPT: employee.DEPT,
-      //   });
-      // } else {
-      //   setValue("approvingAuthority", null);
-      // }
-
-      // return;
     }
 
     if (requiresManualApproval) {
@@ -171,7 +156,13 @@ export default function VisitorForm({
     });
 
     //setValue("approvingAuthority", currentApprovingAuthorities[0] || null);
-  }, [isVehicleEntry, loggedinUser, vehicleApprovingAuthorities, setValue]);
+  }, [
+    isVehicleEntry,
+    loggedinUser,
+    requiresManualApproval,
+    vehicleApprovingAuthorities,
+    setValue,
+  ]);
 
   const buildVisitorRow = (
     data: VisitorFormValues,
@@ -191,6 +182,19 @@ export default function VisitorForm({
   });
 
   const normalize = (value: string) => value.trim().toLowerCase();
+  const isEmpty = (value: unknown) => String(value ?? "").trim() === "";
+  const isValidPhone = (value: unknown) =>
+    /^\d{10}$/.test(String(value ?? "").trim());
+  const isValidAge = (value: unknown) => {
+    const text = String(value ?? "").trim();
+    if (!/^\d+$/.test(text)) return false;
+
+    const age = Number(text);
+    return age >= 1 && age <= 120;
+  };
+
+  const digitsOnly = (value: unknown) =>
+    String(value ?? "").replace(/\D+/g, "");
 
   const isDuplicateVisitor = (data: VisitorFormValues) => {
     return rows.some((row) => {
@@ -208,6 +212,7 @@ export default function VisitorForm({
       return;
     }
     setLoading(true);
+    setGridError("");
 
     const newId =
       rows.length > 0 ? Math.max(...rows.map((row) => row.id)) + 1 : 1;
@@ -238,18 +243,21 @@ export default function VisitorForm({
     }
   };
   const handleEditClick = (id: GridRowId) => {
+    setGridError("");
     setRowModesModel((prev) => ({
       ...prev,
       [id]: { mode: GridRowModes.Edit },
     }));
   };
   const handleSaveClick = (id: GridRowId) => {
+    setGridError("");
     setRowModesModel((prev) => ({
       ...prev,
       [id]: { mode: GridRowModes.View },
     }));
   };
   const handleCancelClick = (id: GridRowId) => {
+    setGridError("");
     setRowModesModel((prev) => ({
       ...prev,
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
@@ -257,23 +265,46 @@ export default function VisitorForm({
   };
 
   const handleDeleteRow = (id: number) => {
+    setGridError("");
     setRows((prev) => prev.filter((row) => row.id !== id));
   };
 
   const handleProcessRowUpdate = (newRow: VisitorGridRow) => {
-    console.log("trying to save row", newRow);
-    if (!/^\d{10}$/.test(newRow.phone)) {
+    if (isEmpty(newRow.company)) {
+      throw new Error("Visitor company is required");
+    }
+
+    if (isEmpty(newRow.name)) {
+      throw new Error("Visitor name is required");
+    }
+
+    if (isEmpty(newRow.address1)) {
+      throw new Error("Address Line 1 is required");
+    }
+
+    if (!isValidPhone(newRow.phone)) {
       throw new Error("Contact number must be exactly 10 digits");
     }
 
-    if (
-      !/^\d+$/.test(newRow.age) ||
-      Number(newRow.age) < 1 ||
-      Number(newRow.age) > 120
-    ) {
+    if (!isValidAge(newRow.age)) {
       throw new Error("Age must be a valid number between 1 and 120");
     }
 
+    const duplicateExists = rows.some((row) => {
+      if (row.id === newRow.id) return false;
+
+      return (
+        normalize(row.name) === normalize(newRow.name) &&
+        normalize(row.phone) === normalize(newRow.phone) &&
+        normalize(row.company) === normalize(newRow.company)
+      );
+    });
+
+    if (duplicateExists) {
+      throw new Error("This visitor is already added.");
+    }
+
+    setGridError("");
     setRows((prev) => prev.map((row) => (row.id === newRow.id ? newRow : row)));
 
     return newRow;
@@ -326,6 +357,7 @@ export default function VisitorForm({
       headerName: "Age",
       width: 90,
       editable: true,
+      valueParser: (value: string) => digitsOnly(value).slice(0, 3),
     },
 
     {
@@ -333,6 +365,7 @@ export default function VisitorForm({
       headerName: "Phone",
       width: 140,
       editable: true,
+      valueParser: (value: string) => digitsOnly(value).slice(0, 10),
     },
 
     {
@@ -685,11 +718,11 @@ export default function VisitorForm({
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               Added Visitors
             </Typography>
-            {/* {gridError && (
+            {gridError && (
               <Typography color="error" sx={{ mb: 1 }}>
                 {gridError}
               </Typography>
-            )} */}
+            )}
 
             <Box sx={{ width: "100%" }}>
               <DataGrid
@@ -700,7 +733,9 @@ export default function VisitorForm({
                 onRowModesModelChange={handleRowModesModelChange}
                 onRowEditStop={handleRowEditStop}
                 processRowUpdate={handleProcessRowUpdate}
-                onProcessRowUpdateError={(error) => console.error(error)}
+                onProcessRowUpdateError={(error) =>
+                  setGridError(error.message || "Unable to save row")
+                }
                 disableRowSelectionOnClick
                 pageSizeOptions={[5, 10, 20]}
                 initialState={{
