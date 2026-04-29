@@ -24,6 +24,7 @@ import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import FormAutocomplete from "./form-components/FormAutocomplete";
 import FormTextField from "./form-components/FormTextField";
 import FormDatePicker from "./form-components/FormDatePicker";
+import FormTimeRangePicker from "./form-components/FormTimeRangePicker";
 import FormDateRangePicker from "./form-components/FormDateRangePicker";
 import FormSwitch from "./form-components/FormSwitch";
 // import SingleFileUpload from "./SingleFileUpload";
@@ -48,6 +49,7 @@ export {
   FormDatePicker,
   FormMobileDatePicker,
   FormDateRangePicker,
+  FormTimeRangePicker,
   SingleFileUpload,
   FormFileUpload,
   FormSwitch,

@@ -7,6 +7,7 @@ import {
   fetchEmployeebyUsername,
   fetchapprovingAuthorityVehicle,
 } from "@/app/database/data";
+import { Paper } from "@/app/core-components";
 
 export default async function CreateVisitorPage() {
   const loggedinUser = await fetchEmployeebyUsername("00066606");
@@ -14,16 +15,14 @@ export default async function CreateVisitorPage() {
   const approvingAuthorityVehicle =
     await fetchapprovingAuthorityVehicle("00066606");
   return (
-    <Page title="New Visitor" icon={PersonAddIcon}>
-      <div className="mx-auto w-full max-w-[1120px] rounded-2xl bg-white p-4 shadow-lg sm:p-6 md:p-8">
-        <CreateVisitorForm
-          loggedinUser={loggedinUser}
-          approvingAuthority={approvingAuthority}
-          approvingAuthorityVehicle={approvingAuthorityVehicle}
-        />
-      </div>
-    </Page>
-    //   </Stack>
-    // </Box>
+    // <Page title="New Visitor" icon={PersonAddIcon}>
+
+    <CreateVisitorForm
+      loggedinUser={loggedinUser}
+      approvingAuthority={approvingAuthority}
+      approvingAuthorityVehicle={approvingAuthorityVehicle}
+    />
+
+    //</Page>
   );
 }

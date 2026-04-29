@@ -9,8 +9,10 @@ export type VisitorFormValues = {
   department: string;
   intercom: string;
   purpose: string;
-  fromdate: Date | null;
-  todate: Date | null;
+  dateRange: [Date | null, Date | null];
+  timeRange: [Date | null, Date | null];
+  // fromdate: Date | null;
+  // todate: Date | null;
   vehicleentry: string;
   approvingAuthority: ApprovingAuthority | VehicleApprovingAuthority | null;
   company: string;
