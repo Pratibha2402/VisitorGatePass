@@ -130,7 +130,7 @@ export default function VisitorForm({
 
   const isVehicleEntry = watch("vehicleentry");
   const requiresManualApproval = ["A", "B", "C"].includes(
-    loggedinUser?.GRADE || "",
+    loggedinUser?.grade || "",
   );
   const showApprovingAuthority =
     isVehicleEntry === "Yes" || requiresManualApproval;
@@ -155,9 +155,9 @@ export default function VisitorForm({
   useEffect(() => {
     if (!loggedinUser) return;
 
-    setValue("officerName", loggedinUser.NAME || "");
-    setValue("designation", loggedinUser.DESIG || "");
-    setValue("department", loggedinUser.DEPT || "");
+    setValue("officerName", loggedinUser.name || "");
+    setValue("designation", loggedinUser.designation || "");
+    setValue("department", loggedinUser.department || "");
   }, [loggedinUser, setValue]);
 
   /* set value for approving authority based on vehicle entry and approval requirement */
@@ -177,10 +177,10 @@ export default function VisitorForm({
     }
 
     setValue("approvingAuthority", {
-      EMPNO: loggedinUser.EMPNO,
-      NAME: loggedinUser.NAME,
-      DESIG: loggedinUser.DESIG,
-      DEPT: loggedinUser.DEPT,
+      empNo: loggedinUser.empNo,
+      name: loggedinUser.name,
+      designation: loggedinUser.designation,
+      department: loggedinUser.department,
     });
 
     //setValue("approvingAuthority", currentApprovingAuthorities[0] || null);
@@ -680,11 +680,16 @@ export default function VisitorForm({
                         error={errors.approvingAuthority}
                         getOptionLabel={(
                           option: ApprovingAuthority | Employee | null,
-                        ) => (option ? `${option.NAME} (${option.DESIG})` : "")}
+                        ) =>
+                          option ? `${option.name} (${option.designation})` : ""
+                        }
+                        getOptionKey={(option: ApprovingAuthority | Employee) =>
+                          option.empNo
+                        }
                         isOptionEqualToValue={(
                           option: ApprovingAuthority | Employee,
                           value: ApprovingAuthority | Employee | null,
-                        ) => option.EMPNO === value?.EMPNO}
+                        ) => option.empNo === value?.empNo}
                         disableClearable
                       />
                     )}
