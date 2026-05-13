@@ -1,46 +1,7 @@
-// import * as oracledb from "oracledb";
-// import { getConnection } from "./db";
 import { QueryTypes } from "sequelize";
-import { sequelize_misc } from "./db";
-import { Employee } from "./models/Employee";
-
-type ApprovingAuthority = {
-  empNo: number;
-  name: string;
-  designation: string;
-  department: string;
-};
-
-type VehicleApprovingAuthority = {
-  empNo: number;
-  name: string;
-  designation: string;
-  department: string;
-};
+import { sequelize_misc } from "@/app/database/db";
 
 
-export async function fetchEmployeebyUsername(username: string) {
-  try {
-    let employee = await Employee.findOne({
-      where: {
-        username,
-      },
-    });
-
-    if (!employee) {
-      throw new Error("Employee not found in rnd database!!");
-    }
-
-    const jsonEmployee = JSON.parse(JSON.stringify(employee));
-
-    const emp = {
-      ...jsonEmployee,
-    };
-    return emp;
-  } catch (e: any) {
-    console.error(e?.message || "Something went wrong!");
-  }
-}
 
 export async function fetchApprovingAuthority(empno: string) {
   const sql = `
@@ -75,7 +36,7 @@ FROM (
 ORDER BY approver.NAME
   `;
 
-  return sequelize_misc.query<ApprovingAuthority>(sql, {
+  return sequelize_misc.query(sql, {
     replacements: {
       empno,
       status: "ACTIVE",
@@ -174,7 +135,7 @@ FROM (
 ) approver
 ORDER BY approver.NAME
     `;
-  return sequelize_misc.query<VehicleApprovingAuthority>(sql, {
+  return sequelize_misc.query(sql, {
     replacements: {
       empno,
       status: "ACTIVE",
@@ -183,6 +144,3 @@ ORDER BY approver.NAME
     type: QueryTypes.SELECT,
   });
 }
-
-export type { ApprovingAuthority,VehicleApprovingAuthority };
-export {Employee};

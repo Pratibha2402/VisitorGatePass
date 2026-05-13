@@ -16,7 +16,6 @@ import {
 import {
   Button,
   FormAutocomplete,
-  FormDateTimePicker,
   FormDateRangePicker,
   FormTimeRangePicker,
   FormTextField,
@@ -49,11 +48,6 @@ import {
 } from "@/app/enum";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import {
-  type ApprovingAuthority,
-  Employee,
-  type VehicleApprovingAuthority,
-} from "@/app/database/data";
 
 import { VisitorFormValues, VisitorGridRow } from "@/app/type";
 import dayjs, { Dayjs } from "dayjs";
@@ -61,13 +55,6 @@ import dayjs, { Dayjs } from "dayjs";
 const today = dayjs().startOf("day");
 const minTime = dayjs().hour(9).minute(0).second(0).millisecond(0); // 9:00 AM
 const maxTime = dayjs().hour(16).minute(30).second(0).millisecond(0); // 4:30 PM
-type VisitorFormProps = {
-  loggedinUser: Employee | null;
-  approvingAuthority: ApprovingAuthority[] | null;
-  approvingAuthorityVehicle: VehicleApprovingAuthority[] | null;
-  // allActiveRndEmployees: Employee[] | null;
-};
-
 const titleOptions = Object.values(TITLE);
 const genderOptions = Object.values(GENDER);
 const nationalityOptions = Object.values(NATIONALITY);
@@ -106,11 +93,9 @@ const defaultValues: VisitorFormValues = {
   nationality: nationalityOptions[0],
 };
 
-export default function VisitorForm({
-  loggedinUser,
-  approvingAuthority,
-  approvingAuthorityVehicle,
-}: VisitorFormProps) {
+export default function VisitorForm(props: any) {
+  const { loggedinUser, approvingAuthority, approvingAuthorityVehicle } = props;
+
   const {
     control,
     getValues,
@@ -162,17 +147,19 @@ export default function VisitorForm({
 
   /* set value for approving authority based on vehicle entry and approval requirement */
   useEffect(() => {
-    if (!loggedinUser) {
-      return;
-    }
+    if (!loggedinUser) return;
 
-    if (isVehicleEntry === "Yes") {
-      setValue("approvingAuthority", null);
-      return;
-    }
+    if (showApprovingAuthority) {
+      const selected = getValues("approvingAuthority");
 
-    if (requiresManualApproval) {
-      setValue("approvingAuthority", null);
+      const isSelectedValid = currentOptions.some(
+        (option: any) => option.empNo === selected?.empNo,
+      );
+
+      if (!isSelectedValid) {
+        setValue("approvingAuthority", null);
+      }
+
       return;
     }
 
@@ -182,13 +169,11 @@ export default function VisitorForm({
       designation: loggedinUser.designation,
       department: loggedinUser.department,
     });
-
-    //setValue("approvingAuthority", currentApprovingAuthorities[0] || null);
   }, [
-    isVehicleEntry,
     loggedinUser,
-    requiresManualApproval,
-    vehicleApprovingAuthorities,
+    showApprovingAuthority,
+    currentOptions,
+    getValues,
     setValue,
   ]);
 
@@ -524,7 +509,7 @@ export default function VisitorForm({
           ? dayjs(formValues.timeRange[1]).format("hh:mm A")
           : null,
         vehicleentry: formValues.vehicleentry,
-        approvingAuthority: formValues.approvingAuthority,
+        approvingAuthorityEmpNo: formValues.approvingAuthority?.empNo ?? null,
       },
       visitors: rows,
     };
@@ -552,393 +537,365 @@ export default function VisitorForm({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
-      <Box sx={{ py: 6 }}>
+      {/* <Box sx={{ py: 6 }}>
         <Box
           className="mx-auto px-6 bg-white rounded-xl shadow-sm border border-gray-200"
           sx={{ maxWidth: "100%", width: "100%", p: 8 }}
-        >
-          {/* form */}
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="mx-auto my-20 max-w-10xl px-6"
-          >
-            <div className="space-y-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-              <div className="space-y-4">
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Officer Details
-                </Typography>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gap: 3,
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        md: "repeat(2, minmax(0, 1fr))",
-                      },
-                      alignItems: "start",
-                    }}
-                  >
-                    <FormTextField
-                      name="officerName"
-                      label="Officer Name"
-                      control={control}
-                      disabled
-                    />
-                    <FormTextField
-                      name="designation"
-                      label="Designation"
-                      control={control}
-                      disabled
-                    />
-                    <FormTextField
-                      name="department"
-                      label="Department"
-                      control={control}
-                      disabled
-                    />
-                    <FormTextField
-                      name="intercom"
-                      label="Intercom No"
-                      control={control}
-                      rules={{
-                        required: "Intercom number is required",
-                        pattern: {
-                          value: /^\d+$/,
-                          message: "Intercom must contain digits only",
-                        },
-                      }}
-                      error={errors.intercom}
-                    />
+        > */}
+      {/* form */}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="mx-auto my-20 max-w-10xl px-6"
+      >
+        <div className="space-y-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+          <div className="space-y-4">
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Officer Details
+            </Typography>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* <Box
+                sx={{
+                  display: "grid",
+                  gap: 3,
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    md: "repeat(2, minmax(0, 1fr))",
+                  },
+                  alignItems: "start",
+                }}
+              > */}
+              <FormTextField
+                name="officerName"
+                label="Officer Name"
+                control={control}
+                disabled
+              />
+              <FormTextField
+                name="designation"
+                label="Designation"
+                control={control}
+                disabled
+              />
+              <FormTextField
+                name="department"
+                label="Department"
+                control={control}
+                disabled
+              />
+              <FormTextField
+                name="intercom"
+                label="Intercom No"
+                control={control}
+                rules={{
+                  required: "Intercom number is required",
+                  pattern: {
+                    value: /^\d+$/,
+                    message: "Intercom must contain digits only",
+                  },
+                }}
+                error={errors.intercom}
+              />
 
-                    <FormDateRangePicker
-                      name="dateRange"
-                      label="Date Range"
-                      control={control}
-                      error={errors.dateRange}
-                      minDate={dayjs().startOf("day")} // ✅ disables past dates
-                      rules={{
-                        required: "Date range is required",
-                        validate: (value: [Dayjs | null, Dayjs | null]) => {
-                          const [start, end] = value || [];
+              <FormDateRangePicker
+                name="dateRange"
+                label="Date Range"
+                control={control}
+                error={errors.dateRange}
+                minDate={dayjs().startOf("day")} // ✅ disables past dates
+                rules={{
+                  required: "Date range is required",
+                  validate: (value: [Dayjs | null, Dayjs | null]) => {
+                    const [start, end] = value || [];
 
-                          if (!start || !end) return "Date range is required";
+                    if (!start || !end) return "Date range is required";
 
-                          if (start.isBefore(today)) {
-                            return "Backdate not allowed";
-                          }
-
-                          if (end.isBefore(start)) {
-                            return "End date must be after start date";
-                          }
-
-                          if (end.diff(start, "day") > 1) {
-                            return "Maximum 2 days allowed";
-                          }
-
-                          return true;
-                        },
-                      }}
-                    />
-
-                    <FormTimeRangePicker
-                      name="timeRange"
-                      label="Time Range"
-                      control={control}
-                      error={errors.timeRange}
-                      minTime={dayjs()
-                        .hour(9)
-                        .minute(0)
-                        .second(0)
-                        .millisecond(0)} // ✅ 9:00 AM
-                      maxTime={dayjs()
-                        .hour(16)
-                        .minute(30)
-                        .second(0)
-                        .millisecond(0)} // ✅ 4:30 PM
-                      rules={{
-                        required: "Time range is required",
-                        validate: (value: [Dayjs | null, Dayjs | null]) => {
-                          const [start, end] = value || [];
-
-                          if (!start || !end) return "Time range is required";
-
-                          if (start.isBefore(minTime) || end.isAfter(maxTime)) {
-                            return "Allowed time is 9:00 AM to 4:30 PM";
-                          }
-
-                          if (end.isBefore(start)) {
-                            return "End time must be after start time";
-                          }
-
-                          return true;
-                        },
-                      }}
-                    />
-
-                    {/* <FormDateTimePicker
-                      name="fromdate"
-                      label="From Date"
-                      control={control}
-                    />
-                    <FormDateTimePicker
-                      name="todate"
-                      label="To Date"
-                      control={control}
-                    /> */}
-
-                    <FormTextField
-                      name="purpose"
-                      label="Purpose of Visit"
-                      control={control}
-                      rules={{ required: true }}
-                      error={errors.purpose}
-                    />
-                    <FormAutocomplete
-                      name="vehicleentry"
-                      label="Vehicle Entry Required?"
-                      control={control}
-                      options={vehicleOptions}
-                      getOptionLabel={(option: string) => option}
-                      isOptionEqualToValue={(
-                        option: string,
-                        value: string | null,
-                      ) => option === value}
-                      disableClearable
-                    />
-
-                    {showApprovingAuthority && (
-                      <FormAutocomplete
-                        name="approvingAuthority"
-                        label="Approving Authority"
-                        control={control}
-                        options={currentOptions}
-                        rules={{ required: true }}
-                        error={errors.approvingAuthority}
-                        getOptionLabel={(
-                          option: ApprovingAuthority | Employee | null,
-                        ) =>
-                          option ? `${option.name} (${option.designation})` : ""
-                        }
-                        getOptionKey={(option: ApprovingAuthority | Employee) =>
-                          option.empNo
-                        }
-                        isOptionEqualToValue={(
-                          option: ApprovingAuthority | Employee,
-                          value: ApprovingAuthority | Employee | null,
-                        ) => option.empNo === value?.empNo}
-                        disableClearable
-                      />
-                    )}
-                  </Box>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Visitor Details
-                </Typography>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gap: 3,
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        md: "repeat(2, minmax(0, 1fr))",
-                      },
-                      alignItems: "start",
-                    }}
-                  >
-                    <FormTextField
-                      name="company"
-                      label="Visitor Company"
-                      control={control}
-                      rules={{ required: true }}
-                      error={errors.company}
-                    />
-
-                    <FormAutocomplete
-                      name="title"
-                      label="Title"
-                      control={control}
-                      options={titleOptions}
-                      getOptionLabel={(option: string) => option}
-                      isOptionEqualToValue={(
-                        option: string,
-                        value: string | null,
-                      ) => option === value}
-                      disableClearable
-                    />
-
-                    <FormTextField
-                      name="name"
-                      label="Visitor Name"
-                      control={control}
-                      rules={{ required: true }}
-                      error={errors.name}
-                    />
-
-                    <FormTextField
-                      name="address1"
-                      label="Address Line 1"
-                      control={control}
-                      rules={{ required: true }}
-                      error={errors.address1}
-                    />
-
-                    <FormTextField
-                      name="address2"
-                      label="Address Line 2"
-                      control={control}
-                    />
-
-                    <FormTextField
-                      name="age"
-                      label="Age"
-                      control={control}
-                      rules={{
-                        required: "Age is required",
-                        pattern: {
-                          value: /^\d+$/,
-                          message: "Age must contain digits only",
-                        },
-                        validate: (value: string) => {
-                          const age = Number(value);
-                          if (age < 1) return "Age must be greater than 0";
-                          if (age > 120) return "Age must be 120 or less";
-                          return true;
-                        },
-                      }}
-                      error={errors.age}
-                    />
-
-                    <FormTextField
-                      name="phone"
-                      label="Contact Number"
-                      control={control}
-                      rules={{
-                        required: "Contact number is required",
-                        pattern: {
-                          value: /^\d{10}$/,
-                          message: "Contact number must be exactly 10 digits",
-                        },
-                      }}
-                      error={errors.phone}
-                    />
-
-                    <FormAutocomplete
-                      name="gender"
-                      label="Gender"
-                      control={control}
-                      options={genderOptions}
-                      getOptionLabel={(option: string) => option}
-                      isOptionEqualToValue={(
-                        option: string,
-                        value: string | null,
-                      ) => option === value}
-                      disableClearable
-                    />
-
-                    <FormAutocomplete
-                      name="nationality"
-                      label="Nationality"
-                      control={control}
-                      options={nationalityOptions}
-                      getOptionLabel={(option: string) => option}
-                      isOptionEqualToValue={(
-                        option: string,
-                        value: string | null,
-                      ) => option === value}
-                      disableClearable
-                    />
-
-                    <FormAutocomplete
-                      name="laptopcarry"
-                      label="Is Visitor Carrying Laptop?"
-                      control={control}
-                      options={laptopcarryOptions}
-                      getOptionLabel={(option: string) => option}
-                      isOptionEqualToValue={(
-                        option: string,
-                        value: string | null,
-                      ) => option === value}
-                      disableClearable
-                    />
-                  </Box>
-                </div>
-              </div>
-
-              <Box sx={{ mt: 4 }}>
-                <Button
-                  variant="contained"
-                  type="submit"
-                  loading={loading}
-                  className="w-full md:w-auto "
-                  sx={{
-                    color: "grey.50",
-                    textShadow: "2px 2px 4px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  {loading ? (
-                    <Stack spacing={2} direction="row">
-                      <CircularProgress color="inherit" size={24} />
-                    </Stack>
-                  ) : (
-                    "Add Visitor"
-                  )}
-                </Button>
-              </Box>
-
-              <div className="space-y-3 rounded-xl border border-slate-200 p-4 sm:p-5">
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                  Added Visitors
-                </Typography>
-                {gridError && (
-                  <Typography color="error" sx={{ mb: 1 }}>
-                    {gridError}
-                  </Typography>
-                )}
-
-                <div className="overflow-hidden rounded-lg border border-slate-200">
-                  {/* <Box sx={{ width: "100%" }}> */}
-                  <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    editMode="row"
-                    rowModesModel={rowModesModel}
-                    onRowModesModelChange={handleRowModesModelChange}
-                    onRowEditStop={handleRowEditStop}
-                    processRowUpdate={handleProcessRowUpdate}
-                    onProcessRowUpdateError={(error) =>
-                      setGridError(error.message || "Unable to save row")
+                    if (start.isBefore(today)) {
+                      return "Backdate not allowed";
                     }
-                    disableRowSelectionOnClick
-                    pageSizeOptions={[5, 10, 20]}
-                    initialState={{
-                      pagination: {
-                        paginationModel: { pageSize: 5, page: 0 },
-                      },
-                    }}
-                  />
-                </div>
-                {/* </Box> */}
-              </div>
 
-              <div className="flex justify-end">
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={handleSaveAllVisitors}
-                  className="w-full md:w-auto"
-                >
-                  Submit All Visitors
-                </Button>
-              </div>
+                    if (end.isBefore(start)) {
+                      return "End date must be after start date";
+                    }
+
+                    if (end.diff(start, "day") > 1) {
+                      return "Maximum 2 days allowed";
+                    }
+
+                    return true;
+                  },
+                }}
+              />
+
+              <FormTimeRangePicker
+                name="timeRange"
+                label="Time Range"
+                control={control}
+                error={errors.timeRange}
+                minTime={dayjs().hour(9).minute(0).second(0).millisecond(0)} // ✅ 9:00 AM
+                maxTime={dayjs().hour(16).minute(30).second(0).millisecond(0)} // ✅ 4:30 PM
+                rules={{
+                  required: "Time range is required",
+                  validate: (value: [Dayjs | null, Dayjs | null]) => {
+                    const [start, end] = value || [];
+
+                    if (!start || !end) return "Time range is required";
+
+                    if (start.isBefore(minTime) || end.isAfter(maxTime)) {
+                      return "Allowed time is 9:00 AM to 4:30 PM";
+                    }
+
+                    if (end.isBefore(start)) {
+                      return "End time must be after start time";
+                    }
+
+                    return true;
+                  },
+                }}
+              />
+              <FormTextField
+                name="purpose"
+                label="Purpose of Visit"
+                control={control}
+                rules={{ required: true }}
+                error={errors.purpose}
+              />
+              <FormAutocomplete
+                name="vehicleentry"
+                label="Vehicle Entry Required?"
+                control={control}
+                options={vehicleOptions}
+                getOptionLabel={(option: string) => option}
+                isOptionEqualToValue={(option: string, value: string | null) =>
+                  option === value
+                }
+                disableClearable
+              />
+
+              {showApprovingAuthority && (
+                <FormAutocomplete
+                  name="approvingAuthority"
+                  label="Approving Authority"
+                  control={control}
+                  options={currentOptions}
+                  rules={{ required: "Approving authority is required" }}
+                  error={errors.approvingAuthority}
+                  getOptionLabel={(option: any) =>
+                    option ? `${option.name} (${option.designation})` : ""
+                  }
+                  getOptionKey={(option: any) => option.empNo}
+                  isOptionEqualToValue={(option: any, value: any) =>
+                    option?.empNo === value?.empNo
+                  }
+                  disableClearable
+                />
+              )}
+              {/* </Box> */}
             </div>
-          </form>
-        </Box>
-      </Box>
+          </div>
+
+          <div className="space-y-4">
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Visitor Details
+            </Typography>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* <Box
+                sx={{
+                  display: "grid",
+                  gap: 3,
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    md: "repeat(2, minmax(0, 1fr))",
+                  },
+                  alignItems: "start",
+                }}
+              > */}
+              <FormTextField
+                name="company"
+                label="Visitor Company"
+                control={control}
+                rules={{ required: true }}
+                error={errors.company}
+              />
+
+              <FormAutocomplete
+                name="title"
+                label="Title"
+                control={control}
+                options={titleOptions}
+                getOptionLabel={(option: string) => option}
+                isOptionEqualToValue={(option: string, value: string | null) =>
+                  option === value
+                }
+                disableClearable
+              />
+
+              <FormTextField
+                name="name"
+                label="Visitor Name"
+                control={control}
+                rules={{ required: true }}
+                error={errors.name}
+              />
+
+              <FormTextField
+                name="address1"
+                label="Address Line 1"
+                control={control}
+                rules={{ required: true }}
+                error={errors.address1}
+              />
+
+              <FormTextField
+                name="address2"
+                label="Address Line 2"
+                control={control}
+              />
+
+              <FormTextField
+                name="age"
+                label="Age"
+                control={control}
+                rules={{
+                  required: "Age is required",
+                  pattern: {
+                    value: /^\d+$/,
+                    message: "Age must contain digits only",
+                  },
+                  validate: (value: string) => {
+                    const age = Number(value);
+                    if (age < 1) return "Age must be greater than 0";
+                    if (age > 120) return "Age must be 120 or less";
+                    return true;
+                  },
+                }}
+                error={errors.age}
+              />
+
+              <FormTextField
+                name="phone"
+                label="Contact Number"
+                control={control}
+                rules={{
+                  required: "Contact number is required",
+                  pattern: {
+                    value: /^\d{10}$/,
+                    message: "Contact number must be exactly 10 digits",
+                  },
+                }}
+                error={errors.phone}
+              />
+
+              <FormAutocomplete
+                name="gender"
+                label="Gender"
+                control={control}
+                options={genderOptions}
+                getOptionLabel={(option: string) => option}
+                isOptionEqualToValue={(option: string, value: string | null) =>
+                  option === value
+                }
+                disableClearable
+              />
+
+              <FormAutocomplete
+                name="nationality"
+                label="Nationality"
+                control={control}
+                options={nationalityOptions}
+                getOptionLabel={(option: string) => option}
+                isOptionEqualToValue={(option: string, value: string | null) =>
+                  option === value
+                }
+                disableClearable
+              />
+
+              <FormAutocomplete
+                name="laptopcarry"
+                label="Is Visitor Carrying Laptop?"
+                control={control}
+                options={laptopcarryOptions}
+                getOptionLabel={(option: string) => option}
+                isOptionEqualToValue={(option: string, value: string | null) =>
+                  option === value
+                }
+                disableClearable
+              />
+              {/* </Box> */}
+            </div>
+          </div>
+
+          {/* <Box sx={{ mt: 4 }}> */}
+          <Button
+            fullWidth
+            variant="contained"
+            type="submit"
+            loading={loading}
+            className="w-full md:w-auto "
+            sx={{
+              color: "grey.50",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.4)",
+            }}
+          >
+            {loading ? (
+              <Stack spacing={2} direction="row">
+                <CircularProgress color="inherit" size={24} />
+              </Stack>
+            ) : (
+              "Add Visitor"
+            )}
+          </Button>
+          {/* </Box> */}
+
+          <div className="space-y-3 rounded-xl border border-slate-200 p-4 sm:p-5">
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              Added Visitors
+            </Typography>
+            {gridError && (
+              <Typography color="error" sx={{ mb: 1 }}>
+                {gridError}
+              </Typography>
+            )}
+
+            <div className="overflow-hidden rounded-lg border border-slate-200">
+              {/* <Box sx={{ width: "100%" }}> */}
+              <DataGrid
+                rows={rows}
+                columns={columns}
+                editMode="row"
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={handleRowModesModelChange}
+                onRowEditStop={handleRowEditStop}
+                processRowUpdate={handleProcessRowUpdate}
+                onProcessRowUpdateError={(error) =>
+                  setGridError(error.message || "Unable to save row")
+                }
+                disableRowSelectionOnClick
+                pageSizeOptions={[5, 10, 20]}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 5, page: 0 },
+                  },
+                }}
+              />
+            </div>
+            {/* </Box> */}
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              fullWidth
+              variant="contained"
+              color="success"
+              onClick={handleSaveAllVisitors}
+              className="w-full md:w-auto"
+            >
+              Submit All Visitors
+            </Button>
+          </div>
+        </div>
+      </form>
+      {/* </Box>
+      </Box> */}
     </LocalizationProvider>
   );
 }

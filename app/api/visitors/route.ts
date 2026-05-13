@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           fromTime: officerDetails.fromtime,
           toTime: officerDetails.totime,
 
-          approvingAuth: officerDetails.approvingAuthority?.empNo ?? null,
+          approvingAuth: officerDetails.approvingAuthorityEmpNo ?? null,
           approvingStatus: 0,
           baggageStatus: visitor.laptopcarry === "Yes" ? 1 : 0,
           adminApprovalStatus: 0,

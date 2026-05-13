@@ -1,8 +1,3 @@
-import type {
-  ApprovingAuthority,
-  VehicleApprovingAuthority,
-} from "@/app/database/data";
-
 export type VisitorFormValues = {
   officerName: string;
   designation: string;
@@ -14,7 +9,7 @@ export type VisitorFormValues = {
   // fromdate: Date | null;
   // todate: Date | null;
   vehicleentry: string;
-  approvingAuthority: ApprovingAuthority | VehicleApprovingAuthority | null;
+  approvingAuthority: any | null;
   company: string;
   title: string;
   name: string;

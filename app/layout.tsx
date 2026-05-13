@@ -31,3 +31,53 @@ export default function RootLayout({
     </html>
   );
 }
+
+// import * as React from "react";
+// import type { Metadata } from "next";
+// import "./globals.css";
+// // import { AppRouterCacheProvider } from "@mui/material-nextjs/v13-appRouter";
+// import { ThemeProvider as NextThemeProvider } from "next-themes";
+// import MuiThemeProvider from "@/core-components/Theme";
+// import { CssBaseline, StyledEngineProvider } from "@/core-components";
+// import { poppins, roboto } from "@/core-components/Theme/fonts";
+// // import { APP_DESCRIPTION, APP_TITLE } from "@/constants";
+// // import { Toaster } from "sonner";
+// // import "@fontsource/material-icons";
+// // import SessionProvider from "@/context/session-provider";
+// // import { getSession } from "./api/auth/get-session";
+
+// // export const metadata: Metadata = {
+// //   title: APP_TITLE,
+// //   description: APP_DESCRIPTION,
+// // };
+
+// export default async function RootLayout({
+//   children,
+// }: Readonly<{
+//   children: React.ReactNode;
+// }>) {
+//   // const session = await getSession();
+//   return (
+//     <html
+//       className={`${poppins.variable} ${roboto.variable}`}
+//       lang="en"
+//       suppressHydrationWarning
+//     >
+//       <body id="__next">
+//         {/* <SessionProvider session={session}>
+//           <AppRouterCacheProvider options={{ enableCssLayer: true }}> */}
+//         <StyledEngineProvider injectFirst>
+//           <NextThemeProvider attribute="class" enableColorScheme enableSystem>
+//             <MuiThemeProvider>
+//               <CssBaseline enableColorScheme />
+//               {children}
+//               {/* <Toaster position="bottom-right" richColors closeButton /> */}
+//             </MuiThemeProvider>
+//           </NextThemeProvider>
+//         </StyledEngineProvider>
+//         {/* </AppRouterCacheProvider>
+//         </SessionProvider> */}
+//       </body>
+//     </html>
+//   );
+// }
