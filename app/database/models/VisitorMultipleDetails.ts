@@ -6,7 +6,7 @@ export const VisitorMultipleDetail = sequelize_misc.define(
   {
     vId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+       primaryKey: true,
       field: "V_ID",
     },
     title: {

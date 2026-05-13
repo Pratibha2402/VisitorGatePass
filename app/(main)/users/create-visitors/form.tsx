@@ -51,7 +51,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import {
   type ApprovingAuthority,
-  type Employee,
+  Employee,
   type VehicleApprovingAuthority,
 } from "@/app/database/data";
 
@@ -59,8 +59,8 @@ import { VisitorFormValues, VisitorGridRow } from "@/app/type";
 import dayjs, { Dayjs } from "dayjs";
 
 const today = dayjs().startOf("day");
-const minTime = dayjs().hour(9).minute(0);
-const maxTime = dayjs().hour(16).minute(30);
+const minTime = dayjs().hour(9).minute(0).second(0).millisecond(0); // 9:00 AM
+const maxTime = dayjs().hour(16).minute(30).second(0).millisecond(0); // 4:30 PM
 type VisitorFormProps = {
   loggedinUser: Employee | null;
   approvingAuthority: ApprovingAuthority[] | null;
@@ -508,10 +508,21 @@ export default function VisitorForm({
         department: formValues.department,
         intercom: formValues.intercom,
         purpose: formValues.purpose,
-        fromdate: formValues.dateRange[0],
-        todate: formValues.dateRange[1],
-        fromtime: formValues.timeRange[0],
-        totime: formValues.timeRange[1],
+        fromdate: formValues.dateRange[0]
+          ? dayjs(formValues.dateRange[0]).format("YYYY-MM-DD")
+          : null,
+
+        todate: formValues.dateRange[1]
+          ? dayjs(formValues.dateRange[1]).format("YYYY-MM-DD")
+          : null,
+
+        fromtime: formValues.timeRange[0]
+          ? dayjs(formValues.timeRange[0]).format("hh:mm A")
+          : null,
+
+        totime: formValues.timeRange[1]
+          ? dayjs(formValues.timeRange[1]).format("hh:mm A")
+          : null,
         vehicleentry: formValues.vehicleentry,
         approvingAuthority: formValues.approvingAuthority,
       },
@@ -519,6 +530,24 @@ export default function VisitorForm({
     };
 
     console.log("Visitor request payload:", payload);
+    const response = await fetch("/api/visitors", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      setGridError(result.message || "Unable to submit visitors.");
+      return;
+    }
+
+    alert(
+      `Visitors submitted successfully. IDs: ${result.visitorIds.join(", ")}`,
+    );
   };
 
   return (
@@ -617,8 +646,16 @@ export default function VisitorForm({
                       label="Time Range"
                       control={control}
                       error={errors.timeRange}
-                      minTime={dayjs().hour(9).minute(30)} // ✅ 9:30 AM
-                      maxTime={dayjs().hour(16).minute(30)} // ✅ 4:30 PM
+                      minTime={dayjs()
+                        .hour(9)
+                        .minute(0)
+                        .second(0)
+                        .millisecond(0)} // ✅ 9:00 AM
+                      maxTime={dayjs()
+                        .hour(16)
+                        .minute(30)
+                        .second(0)
+                        .millisecond(0)} // ✅ 4:30 PM
                       rules={{
                         required: "Time range is required",
                         validate: (value: [Dayjs | null, Dayjs | null]) => {

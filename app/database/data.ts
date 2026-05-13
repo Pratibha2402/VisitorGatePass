@@ -184,4 +184,5 @@ ORDER BY approver.NAME
   });
 }
 
-export type { ApprovingAuthority, Employee,VehicleApprovingAuthority };
+export type { ApprovingAuthority,VehicleApprovingAuthority };
+export {Employee};
