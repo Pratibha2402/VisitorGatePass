@@ -4,6 +4,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { submitVisitorRequests } from "../actions";
 
 import {
   normalize,
@@ -69,6 +70,7 @@ const getClampedStartTime = () => {
 };
 
 const defaultValues: VisitorFormValues = {
+  officerEmpno: "",
   officerName: "",
   designation: "",
   department: "",
@@ -140,6 +142,7 @@ export default function VisitorForm(props: any) {
   useEffect(() => {
     if (!loggedinUser) return;
 
+    setValue("officerEmpno", loggedinUser.empNo || "");
     setValue("officerName", loggedinUser.name || "");
     setValue("designation", loggedinUser.designation || "");
     setValue("department", loggedinUser.department || "");
@@ -488,7 +491,8 @@ export default function VisitorForm(props: any) {
 
     const payload = {
       officerDetails: {
-        officerName: formValues.officerName,
+        officerEmpno: formValues.officerEmpno,
+        // officerName: formValues.officerName,
         designation: formValues.designation,
         department: formValues.department,
         intercom: formValues.intercom,
@@ -514,18 +518,9 @@ export default function VisitorForm(props: any) {
       visitors: rows,
     };
 
-    console.log("Visitor request payload:", payload);
-    const response = await fetch("/api/visitors", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const result = await submitVisitorRequests(payload);
 
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
+    if (!result.success) {
       setGridError(result.message || "Unable to submit visitors.");
       return;
     }
@@ -564,6 +559,13 @@ export default function VisitorForm(props: any) {
                   alignItems: "start",
                 }}
               > */}
+              <FormTextField
+                name="officerEmpno"
+                label="Officer Emp No"
+                control={control}
+                disabled
+                // visible={false}
+              />
               <FormTextField
                 name="officerName"
                 label="Officer Name"

@@ -1,6 +1,7 @@
 import { sequelize_misc } from "@/app/database/db";
 import { DataTypes } from "sequelize";
 
+
 export const VisitorMultipleDetail = sequelize_misc.define(
   "VisitorMultipleDetail",
   {
@@ -66,3 +67,4 @@ export const VisitorMultipleDetail = sequelize_misc.define(
     timestamps: false,
   }
 );
+

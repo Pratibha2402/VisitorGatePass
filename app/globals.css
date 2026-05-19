@@ -1,9 +1,17 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-:root {
+/* @import "tailwindcss.base"; 
+@import "tailwindcss.components";
+@import "tailwindcss.utilities"; */
+
+a,
+a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+
+/* :root {
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -11,19 +19,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-poppins);
+  --font-mono: var(--font-roboto);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+  font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
+} */

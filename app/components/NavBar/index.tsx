@@ -11,14 +11,14 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import { Logout, Login, LightMode, DarkMode } from "@mui/icons-material";
 import Image from "next/image";
-import ioclRndLogo from "/public/iocl-rnd.png";
-import ioclRndLogoWhite from "/public/iocl-rnd-white.png";
+// import ioclRndLogo from "/public/iocl-rnd.png";
+// import ioclRndLogoWhite from "/public/iocl-rnd-white.png";
 import Link from "next/link";
 import BackgroundLetterAvatars from "@/core-components/BackgroundLetterAvatar";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { NAVBAR_TITLE } from "@/constants";
-import { useSession } from "@/context/session-provider";
+import { NAVBAR_TITLE } from "@/app/constants";
+import { useSession } from "@/app/context/session-provider";
 
 export default function NavBar({
   handleDrawerToggle,
@@ -29,7 +29,7 @@ export default function NavBar({
 }) {
   const session = useSession();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null
+    null,
   );
   const { resolvedTheme: theme, setTheme } = useTheme();
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function NavBar({
   };
   return (
     <div
-      className={`sticky left-0 top-0 z-50 flex flex-none basis-16 items-center justify-between gap-x-2 overflow-hidden bg-paper p-2 shadow-md sm:z-[1300] dark:bg-paper-dark`}
+      className={`sticky left-0 top-0 z-50 flex flex-none basis-24 items-center justify-between gap-x-2 overflow-hidden bg-paper p-2 shadow-md sm:z-[1300] dark:bg-paper-dark`}
     >
       <div className="flex flex-none items-center">
         <div className="flex items-center justify-center px-4">
@@ -76,9 +76,9 @@ export default function NavBar({
         {!isSmallScreen && (
           <Link href="https://rndapps.indianoil.in">
             <Image
-              src={theme === "dark" ? ioclRndLogoWhite : ioclRndLogo}
+              src={theme === "dark" ? "/iocl-rnd-white.png" : "/iocl-rnd.png"}
               alt="IOCL R&D Logo"
-              priority
+              width={160}
               height={48}
             />
           </Link>

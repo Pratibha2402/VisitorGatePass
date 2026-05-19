@@ -1,4 +1,5 @@
 export type VisitorFormValues = {
+  officerEmpno: string;
   officerName: string;
   designation: string;
   department: string;

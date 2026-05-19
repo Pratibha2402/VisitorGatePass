@@ -1,10 +1,10 @@
 "use client";
 import * as React from "react";
 import Image from "next/image";
-import ioclRndLogo from "/public/iocl-rnd.png";
-import ioclRndLogoWhite from "/public/iocl-rnd-white.png";
+// import ioclRndLogo from "/public/iocl-rnd.png";
+// import ioclRndLogoWhite from "/public/iocl-rnd-white.png";
 import Link from "next/link";
-import { DrawerItem, getDrawerItems } from "@/components/Drawer/items";
+import { DrawerItem, getDrawerItems } from "@/app/components/Drawer/items";
 import { useTheme } from "next-themes";
 import {
   Badge,
@@ -163,15 +163,24 @@ export default function MyDrawer({
         open={openMobile}
         onClose={() => {}}
         PaperProps={{
-          className: `w-[${drawerWidth}px] box-border`,
+          className: "w-[280px] box-border",
         }}
+        // PaperProps={{
+        //   className: `w-[${drawerWidth}px] box-border`,
+        // }}
       >
         <DrawerHeader className="h-16">
           <Toolbar>
             <Link href="/">
-              <Image
+              {/* <Image
                 src={theme === "dark" ? ioclRndLogoWhite : ioclRndLogo}
                 alt="IOCL R&D Logo"
+                height={48}
+              /> */}
+              <Image
+                src={theme === "dark" ? "/iocl-rnd-white.png" : "/iocl-rnd.png"}
+                alt="IOCL R&D Logo"
+                width={160}
                 height={48}
               />
             </Link>

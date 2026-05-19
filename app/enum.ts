@@ -23,3 +23,8 @@ export const TITLE = {
    yes: "Yes",
    No : "No",
 };
+
+export const USER_ROLES = {
+  ADMIN: "ADMIN",
+  APPROVER:"APPROVER",
+};
