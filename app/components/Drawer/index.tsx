@@ -108,13 +108,14 @@ export default function MyDrawer({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: theme.spacing(0, 1),
+    padding: theme.spacing(2, 1),
     // necessary for content to be below app bar
     // ...theme.mixins.toolbar,
   }));
   if (!items.length && !isSmallScreen)
     return (
-      <div className={`flex flex-col w-[${drawerWidth}px] gap-4 py-4 `}>
+      // <div className={`flex flex-col w-[${drawerWidth}px] gap-4 py-4 `}>
+      <div className={`flex flex-col w-[280px] gap-4 py-4 `}>
         {[...Array(4)].map((_, index) => (
           <Skeleton
             key={index}
@@ -162,21 +163,16 @@ export default function MyDrawer({
         variant="temporary"
         open={openMobile}
         onClose={() => {}}
-        PaperProps={{
-          className: "w-[280px] box-border",
+        slotProps={{
+          paper: {
+            // className: `w-[${drawerWidth}px] box-border`,
+            className: `w-[280px] box-border`,
+          },
         }}
-        // PaperProps={{
-        //   className: `w-[${drawerWidth}px] box-border`,
-        // }}
       >
         <DrawerHeader className="h-16">
           <Toolbar>
             <Link href="/">
-              {/* <Image
-                src={theme === "dark" ? ioclRndLogoWhite : ioclRndLogo}
-                alt="IOCL R&D Logo"
-                height={48}
-              /> */}
               <Image
                 src={theme === "dark" ? "/iocl-rnd-white.png" : "/iocl-rnd.png"}
                 alt="IOCL R&D Logo"

@@ -2,7 +2,6 @@
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
-  Box,
   Button,
   DataGrid,
   Dialog,
@@ -134,67 +133,61 @@ export default function VisitorDetails({
   );
 
   return (
-    <Box className="mx-auto my-20 max-w-10xl px-6">
-      <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Visitor Requests
-        </Typography>
+    <div className="flex w-full min-w-0 flex-col gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <TextField
+          label="Search visitors"
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+          }}
+        />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <TextField
-            label="Search visitors"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPaginationModel((prev) => ({ ...prev, page: 0 }));
-            }}
-          />
+        <TextField
+          label="From Date"
+          type="date"
+          value={fromDate}
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+            },
+          }}
+          onChange={(event) => {
+            setFromDate(event.target.value);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+          }}
+        />
 
-          <TextField
-            label="From Date"
-            type="date"
-            value={fromDate}
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-            onChange={(event) => {
-              setFromDate(event.target.value);
-              setPaginationModel((prev) => ({ ...prev, page: 0 }));
-            }}
-          />
+        <TextField
+          label="To Date"
+          type="date"
+          value={toDate}
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+            },
+          }}
+          onChange={(event) => {
+            setToDate(event.target.value);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+          }}
+        />
+      </div>
 
-          <TextField
-            label="To Date"
-            type="date"
-            value={toDate}
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-            onChange={(event) => {
-              setToDate(event.target.value);
-              setPaginationModel((prev) => ({ ...prev, page: 0 }));
-            }}
-          />
-        </div>
-
-        <div className="overflow-hidden rounded-lg border border-slate-200">
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(row) => row.vId}
-            loading={loading}
-            rowCount={rowCount}
-            paginationMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 20, 50]}
-            disableRowSelectionOnClick
-          />
-        </div>
+      <div className="w-full min-w-0 overflow-x-auto">
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.vId}
+          loading={loading}
+          rowCount={rowCount}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 20, 50]}
+          disableRowSelectionOnClick
+        />
       </div>
 
       <Dialog
@@ -243,7 +236,7 @@ export default function VisitorDetails({
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </div>
   );
 }
 

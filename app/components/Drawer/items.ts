@@ -14,6 +14,7 @@ import {
   Dvr,
   AddToQueue,
   CleaningServices,
+  PersonAdd,
 } from "@mui/icons-material";
 
 export interface DrawerItem {
@@ -34,75 +35,11 @@ export async function getDrawerItems() {
   const isApprover = await hasRole([
     USER_ROLES.APPROVER,
   ]);
-  // if (isAdmin || isApprover) {
-  //   drawerItems = [
-  //     ...drawerItems,
-  //     {
-  //       name: "Asset models list",
-  //       icon: Dvr,
-  //       link: "/asset-model",
-  //     },
-  //     {
-  //       name: "Assets list",
-  //       icon: Dvr,
-  //       link: "/asset",
-  //     },
-  //     {
-  //       name: "Add an asset model",
-  //       icon: AddToQueue,
-  //       link: "/asset-model/add",
-  //     },
-  //     {
-  //       name: "Add an asset",
-  //       icon: AddToQueue,
-  //       link: "/asset/add",
-  //     },
-  //     {
-  //       name: "Add a printer consumable",
-  //       icon: AddCircle,
-  //       link: "/hardware-amc/add-printer-consumable",
-  //     },
-  //     {
-  //       name: "Link cartridge/drum to printer model",
-  //       icon: AddLink,
-  //       link: "/hardware-amc/link-printer-model",
-  //       hasDivider: true,
-  //     },
-  //   ];
-  // }
-
-  // if (isAmcAdmin) {
-  //   drawerItems = [
-  //     ...drawerItems,
-  //     {
-  //       name: "Initiate PM Quarter",
-  //       icon: CalendarMonth,
-  //       link: "/preventive-maintenance/initiate-quarter",
-  //     },
-  //   ];
-  // }
-
-  // if (isAmcAdmin || isAmcEngineer) {
-  //   drawerItems = [
-  //     ...drawerItems,
-  //     {
-  //       name: "Current PM",
-  //       icon: CleaningServices,
-  //       link: "/preventive-maintenance/current",
-  //     },
-  //     {
-  //       name: "PM Reports",
-  //       icon: Assessment,
-  //       link: "/preventive-maintenance/report",
-  //       hasDivider: true,
-  //     },
-  //   ];
-  // }
-  drawerItems = [
+   drawerItems = [
     ...drawerItems,
     {
       name: "Create a new GatePass",
-      icon: AddShoppingCart,
+      icon: PersonAdd,
       link: "/users/create-visitors",
     },
     {

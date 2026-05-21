@@ -1,5 +1,8 @@
 import VisitorDetails from "./visitorsdetails";
 import { VisitorRequests } from "./api";
+import { Paper } from "@/app/core-components";
+import Page from "@/app/components/Page";
+import { PersonAdd } from "@mui/icons-material";
 
 export default async function ViewVisitorsPage({
   searchParams,
@@ -22,5 +25,14 @@ export default async function ViewVisitorsPage({
     pageSize: Number(params.pageSize ?? 10),
   });
 
-  return <VisitorDetails initialRows={data.rows} total={data.total} />;
+  return (
+    <Page title="Pending Approvals" icon={PersonAdd}>
+      <Paper
+        elevation={4}
+        className="flex w-full flex-col gap-8 self-center p-8"
+      >
+        <VisitorDetails initialRows={data.rows} total={data.total} />
+      </Paper>
+    </Page>
+  );
 }

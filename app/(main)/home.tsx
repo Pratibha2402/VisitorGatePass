@@ -34,7 +34,8 @@ export default function Home({
           handleDrawerToggle={handleDrawerToggle}
           isSmallScreen={isSmallScreen}
         />
-        <div className="flex flex-1">
+        {/* <div className="flex flex-1"> */}
+        <div className="flex flex-1 overflow-hidden">
           <MyDrawer
             openDesktop={openDesktopDrawer}
             openMobile={openMobileDrawer}
@@ -42,7 +43,8 @@ export default function Home({
             isSmallScreen={isSmallScreen}
             items={drawerItems}
           />
-          <div className={`flex flex-grow flex-col justify-between`}>
+          {/* <div className={`flex flex-grow flex-col justify-between`}> */}
+          <div className="flex max-h-[calc(100vh-6rem)] flex-grow flex-col justify-between overflow-y-auto">
             <div className="flex flex-1">{children}</div>
             <Footer />
           </div>
