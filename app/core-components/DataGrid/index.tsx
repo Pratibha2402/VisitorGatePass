@@ -16,6 +16,8 @@ import {
   GridToolbar,
   DataGridProps,
   GridRowModes,
+  type GridRenderCellParams,
+  type GridFilterModel,
   type GridRowModesModel,
   type GridRowId,
   GridActionsCellItem,
@@ -40,6 +42,7 @@ function DataGrid(props: DataGridProps) {
       columns={columns}
       autoHeight
       getRowHeight={() => "auto"}
+      showToolbar={true}
       slots={slots || defaultSlots}
       slotProps={{
         toolbar: {
@@ -59,6 +62,8 @@ export {
   GridToolbarExport,
   GridToolbarDensitySelector,
   GridToolbar,
+  GridRenderCellParams,
+  GridFilterModel,
 };
 
 export {

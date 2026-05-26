@@ -1,6 +1,8 @@
 "use client";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { Drawer, Box, IconButton } from "@/app/core-components";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Button,
   DataGrid,
@@ -10,11 +12,22 @@ import {
   GridColDef,
   TextField,
   Typography,
+  Stack,
+  Divider,
+  ListItem,
+  ListItemText,
+  List,
+  DialogActions,
 } from "@/app/core-components";
+import Chip from "@mui/material/Chip";
+
+import type {
+  GridFilterModel,
+  GridRenderCellParams,
+} from "@/app/core-components/DataGrid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import type { GridRenderCellParams } from "@mui/x-data-grid";
 
 function useDebounce<T>(value: T, delay = 500) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -38,8 +51,7 @@ export default function VisitorDetails({
   const [rowCount, setRowCount] = useState(total);
   const [loading, setLoading] = useState(false);
 
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search);
+  // const [search, setSearch] = useState("");
 
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -48,7 +60,12 @@ export default function VisitorDetails({
 
   const router = useRouter();
   const searchParams = useSearchParams();
-
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const debouncedSearch = useDebounce(search);
+  const [filterModel, setFilterModel] = useState<GridFilterModel>({
+    items: [],
+    quickFilterValues: search ? [search] : [],
+  });
   const [paginationModel, setPaginationModel] = useState({
     page: Number(searchParams.get("page") ?? 0),
     pageSize: Number(searchParams.get("pageSize") ?? 10),
@@ -135,14 +152,14 @@ export default function VisitorDetails({
   return (
     <div className="flex w-full min-w-0 flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <TextField
+        {/* <TextField
           label="Search visitors"
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
             setPaginationModel((prev) => ({ ...prev, page: 0 }));
           }}
-        />
+        /> */}
 
         <TextField
           label="From Date"
@@ -175,22 +192,30 @@ export default function VisitorDetails({
         />
       </div>
 
-      <div className="w-full min-w-0 overflow-x-auto">
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          getRowId={(row) => row.vId}
-          loading={loading}
-          rowCount={rowCount}
-          paginationMode="server"
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[5, 10, 20, 50]}
-          disableRowSelectionOnClick
-        />
-      </div>
+      {/* <div className="w-full min-w-0 overflow-x-auto"> */}
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowId={(row) => row.vId}
+        loading={loading}
+        rowCount={rowCount}
+        paginationMode="server"
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        filterModel={filterModel}
+        onFilterModelChange={(model) => {
+          const quickSearch = model.quickFilterValues?.join(" ") ?? "";
 
-      <Dialog
+          setFilterModel(model);
+          setSearch(quickSearch);
+          setPaginationModel((prev) => ({ ...prev, page: 0 }));
+        }}
+        pageSizeOptions={[5, 10, 20, 50]}
+        disableRowSelectionOnClick
+      />
+      {/* </div> */}
+
+      {/* <Dialog
         open={Boolean(selectedVisitor)}
         onClose={() => setSelectedVisitor(null)}
         fullWidth
@@ -199,7 +224,7 @@ export default function VisitorDetails({
         <DialogTitle>Visitor Details</DialogTitle>
         <DialogContent dividers>
           {selectedVisitor && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
               <Detail label="Visitor ID" value={selectedVisitor.vId} />
               <Detail label="Name" value={selectedVisitor.details?.name} />
               <Detail label="Company" value={selectedVisitor.companyName} />
@@ -235,19 +260,294 @@ export default function VisitorDetails({
             </div>
           )}
         </DialogContent>
+      </Dialog> */}
+
+      {/* <Dialog
+        open={Boolean(selectedVisitor)}
+        onClose={() => setSelectedVisitor(null)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Visitor Details</DialogTitle>
+
+        <DialogContent dividers>
+          {selectedVisitor && (
+            <Stack spacing={2}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={4}>
+                <Stack spacing={2} flex={1}>
+                  <Detail label="Visitor ID" value={selectedVisitor.vId} />
+                  <Detail label="Name" value={selectedVisitor.details?.name} />
+                  <Detail label="Company" value={selectedVisitor.companyName} />
+                  <Detail label="Contact" value={selectedVisitor.contact} />
+                  <Detail label="Purpose" value={selectedVisitor.purpose} />
+                  <Detail label="Address 1" value={selectedVisitor.address1} />
+                  <Detail label="Address 2" value={selectedVisitor.address2} />
+                </Stack>
+
+                <Stack spacing={2} flex={1}>
+                  <Detail label="Age" value={selectedVisitor.details?.age} />
+                  <Detail label="Gender" value={selectedVisitor.details?.sex} />
+                  <Detail
+                    label="Nationality"
+                    value={selectedVisitor.details?.nationality}
+                  />
+                  <Detail
+                    label="Created By"
+                    value={selectedVisitor.visitedEmployee?.name}
+                  />
+                  <Detail
+                    label="Intercom"
+                    value={selectedVisitor.empVisitedIcom}
+                  />
+                  <Detail
+                    label="Laptop Carry"
+                    value={selectedVisitor.baggageStatus === 1 ? "Yes" : "No"}
+                  />
+                </Stack>
+              </Stack>
+
+              <Divider />
+
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={4}>
+                <Stack spacing={2} flex={1}>
+                  <Detail
+                    label="From Date"
+                    value={formatDate(selectedVisitor.fromDate)}
+                  />
+                  <Detail label="From Time" value={selectedVisitor.fromTime} />
+                </Stack>
+
+                <Stack spacing={2} flex={1}>
+                  <Detail
+                    label="To Date"
+                    value={formatDate(selectedVisitor.toDate)}
+                  />
+                  <Detail label="To Time" value={selectedVisitor.toTime} />
+                </Stack>
+              </Stack>
+            </Stack>
+          )}
+        </DialogContent>
+      </Dialog> */}
+      {/* <Dialog
+  open={Boolean(selectedVisitor)}
+  onClose={() => setSelectedVisitor(null)}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>Visitor Details</DialogTitle>
+
+  <DialogContent dividers>
+    {selectedVisitor && (
+      <Stack spacing={3}>
+        <DetailSection title="Visitor">
+          <DetailRow label="Visitor ID" value={selectedVisitor.vId} />
+          <DetailRow label="Name" value={selectedVisitor.details?.name} />
+          <DetailRow label="Company" value={selectedVisitor.companyName} />
+          <DetailRow label="Contact" value={selectedVisitor.contact} />
+          <DetailRow label="Age" value={selectedVisitor.details?.age} />
+          <DetailRow label="Gender" value={selectedVisitor.details?.sex} />
+          <DetailRow
+            label="Nationality"
+            value={selectedVisitor.details?.nationality}
+          />
+        </DetailSection>
+
+        <Divider />
+
+        <DetailSection title="Visit">
+          <DetailRow label="Purpose" value={selectedVisitor.purpose} />
+          <DetailRow label="Address 1" value={selectedVisitor.address1} />
+          <DetailRow label="Address 2" value={selectedVisitor.address2} />
+          <DetailRow
+            label="From"
+            value={`${formatDate(selectedVisitor.fromDate)} ${selectedVisitor.fromTime || ""}`}
+          />
+          <DetailRow
+            label="To"
+            value={`${formatDate(selectedVisitor.toDate)} ${selectedVisitor.toTime || ""}`}
+          />
+          <DetailRow
+            label="Laptop Carry"
+            value={
+              <Chip
+                size="small"
+                label={selectedVisitor.baggageStatus === 1 ? "Yes" : "No"}
+                color={selectedVisitor.baggageStatus === 1 ? "success" : "default"}
+                variant="outlined"
+              />
+            }
+          />
+        </DetailSection>
+
+        <Divider />
+
+        <DetailSection title="Host">
+          <DetailRow
+            label="Created By"
+            value={selectedVisitor.visitedEmployee?.name}
+          />
+          <DetailRow label="Intercom" value={selectedVisitor.empVisitedIcom} />
+        </DetailSection>
+      </Stack>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={() => setSelectedVisitor(null)}>Close</Button>
+  </DialogActions>
+</Dialog> */}
+
+      <Dialog
+        open={Boolean(selectedVisitor)}
+        onClose={() => setSelectedVisitor(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Visitor Details</DialogTitle>
+
+        <DialogContent dividers>
+          {selectedVisitor && (
+            <Stack spacing={3}>
+              <DetailSection title="Visitor">
+                <DetailRow label="Visitor ID" value={selectedVisitor.vId} />
+                <DetailRow label="Name" value={selectedVisitor.details?.name} />
+                <DetailRow
+                  label="Company"
+                  value={selectedVisitor.companyName}
+                />
+                <DetailRow label="Contact" value={selectedVisitor.contact} />
+                <DetailRow label="Age" value={selectedVisitor.details?.age} />
+                <DetailRow
+                  label="Gender"
+                  value={selectedVisitor.details?.sex}
+                />
+                <DetailRow
+                  label="Nationality"
+                  value={selectedVisitor.details?.nationality}
+                />
+              </DetailSection>
+
+              <Divider />
+
+              <DetailSection title="Visit">
+                <DetailRow label="Purpose" value={selectedVisitor.purpose} />
+                <DetailRow label="Address 1" value={selectedVisitor.address1} />
+                <DetailRow label="Address 2" value={selectedVisitor.address2} />
+                <DetailRow
+                  label="From"
+                  value={`${formatDate(selectedVisitor.fromDate)} ${selectedVisitor.fromTime || ""}`}
+                />
+                <DetailRow
+                  label="To"
+                  value={`${formatDate(selectedVisitor.toDate)} ${selectedVisitor.toTime || ""}`}
+                />
+                <DetailRow
+                  label="Laptop Carry"
+                  value={
+                    <Chip
+                      size="small"
+                      label={selectedVisitor.baggageStatus === 1 ? "Yes" : "No"}
+                      color={
+                        selectedVisitor.baggageStatus === 1
+                          ? "success"
+                          : "default"
+                      }
+                      variant="outlined"
+                    />
+                  }
+                />
+              </DetailSection>
+
+              <Divider />
+
+              <DetailSection title="Host">
+                <DetailRow
+                  label="Created By"
+                  value={selectedVisitor.visitedEmployee?.name}
+                />
+                <DetailRow
+                  label="Intercom"
+                  value={selectedVisitor.empVisitedIcom}
+                />
+              </DetailSection>
+            </Stack>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setSelectedVisitor(null)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );
 }
 
+// function Detail({ label, value }: { label: string; value: any }) {
+//   return (
+//     <div>
+//       <Typography variant="caption" color="text.secondary">
+//         {label}
+//       </Typography>
+//       <Typography variant="body2">{value || "-"}</Typography>
+//     </div>
+//   );
+// }
+
+function DetailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Stack spacing={1}>
+      <Typography variant="subtitle2" color="primary">
+        {title}
+      </Typography>
+
+      <List dense disablePadding>
+        {children}
+      </List>
+    </Stack>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <ListItem disableGutters sx={{ py: 0.5 }}>
+      <ListItemText
+        primary={label}
+        secondary={value || "-"}
+        slotProps={{
+          primary: {
+            variant: "caption",
+            color: "text.secondary",
+          },
+          secondary: {
+            variant: "body2",
+            color: "text.primary",
+          },
+        }}
+      />
+    </ListItem>
+  );
+}
 function Detail({ label, value }: { label: string; value: any }) {
   return (
-    <div>
+    <Stack spacing={0.5}>
       <Typography variant="caption" color="text.secondary">
         {label}
       </Typography>
       <Typography variant="body2">{value || "-"}</Typography>
-    </div>
+    </Stack>
   );
 }
 
