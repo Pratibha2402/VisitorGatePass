@@ -1,3 +1,4 @@
+import { canAccessGatePassApprover } from "@/app/(main)/approver/api";
 import { hasRole } from "@/app/api";
 import { USER_ROLES } from "@/app/enum";
 import {
@@ -35,6 +36,7 @@ export async function getDrawerItems() {
   const isApprover = await hasRole([
     USER_ROLES.APPROVER,
   ]);
+  const canApproveGatePass = await canAccessGatePassApprover();
    drawerItems = [
     ...drawerItems,
     {
@@ -47,24 +49,23 @@ export async function getDrawerItems() {
       icon: History,
       link: "/users/view-visitors",
     },
+  ];
+if (canApproveGatePass) {
+  drawerItems = [
+    ...drawerItems,
     {
-      name: "Pending approvals",
+      name: "Pending Approvals",
       icon: PendingActions,
-      link: "/gatepass/approver/pending-approvals",
+      link: "/approver/pending-approvals",
       hasDivider: true,
     },
-
+    {
+      name: "Approved Requests",
+      icon: NoteAdd,
+      link: "/approver/approved-requests",
+    },
   ];
-  if(isApprover){
-    drawerItems = [
-      ...drawerItems,
-      {
-        name: "Approved Requests",
-        icon: NoteAdd,
-        link: "/gatepass/approver/approved-requests",
-      },
-    ];
-  }
+}
   if (isAdmin ) {
     drawerItems = [
       ...drawerItems,

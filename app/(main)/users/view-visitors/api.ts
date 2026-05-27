@@ -70,3 +70,12 @@ const matchesDateRange =
   };
 }
 
+export async function VisitorRequestById(vId: string) {
+  const data = await VisitorRequests({
+    page: 0,
+    pageSize: 10000,
+  });
+
+  return data.rows.find((visitor: any) => String(visitor.vId) === String(vId));
+}
+
