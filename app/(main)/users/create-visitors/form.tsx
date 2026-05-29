@@ -83,6 +83,7 @@ const defaultValues: VisitorFormValues = {
   // fromdate: null,
   // todate: null,
   vehicleentry: "No",
+  vehicleNo: "",
   laptopcarry: "No",
 
   approvingAuthority: null,
@@ -98,7 +99,13 @@ const defaultValues: VisitorFormValues = {
 };
 
 export default function VisitorForm(props: any) {
-  const { loggedinUser, approvingAuthority, approvingAuthorityVehicle } = props;
+  const {
+    loggedinUser,
+    approvingAuthority,
+    approvingAuthorityVehicle,
+    canSelfApproveGatePass,
+    canSelfApproveVehicleGatePass,
+  } = props;
 
   const {
     control,
@@ -118,11 +125,18 @@ export default function VisitorForm(props: any) {
   const [rows, setRows] = useState<VisitorGridRow[]>([]);
 
   const isVehicleEntry = watch("vehicleentry");
-  const requiresManualApproval = ["A", "B", "C"].includes(
-    loggedinUser?.grade || "",
-  );
-  const showApprovingAuthority =
-    isVehicleEntry === "Yes" || requiresManualApproval;
+  // const requiresManualApproval = !canSelfApproveGatePass;
+  const requiresManualApproval =
+    isVehicleEntry === "Yes"
+      ? !canSelfApproveVehicleGatePass
+      : !canSelfApproveGatePass;
+  useEffect(() => {
+    if (isVehicleEntry !== "Yes") {
+      setValue("vehicleNo", "");
+    }
+  }, [isVehicleEntry, setValue]);
+  const showApprovingAuthority = requiresManualApproval;
+  //isVehicleEntry === "Yes" || requiresManualApproval;
 
   const currentApprovingAuthorities = useMemo(
     () => approvingAuthority ?? [],
@@ -136,7 +150,7 @@ export default function VisitorForm(props: any) {
   const currentOptions =
     isVehicleEntry === "Yes"
       ? vehicleApprovingAuthorities
-      : requiresManualApproval
+      : showApprovingAuthority
         ? currentApprovingAuthorities
         : [];
 
@@ -144,7 +158,7 @@ export default function VisitorForm(props: any) {
   useEffect(() => {
     if (!loggedinUser) return;
 
-    setValue("officerEmpno", loggedinUser.empNo || "");
+    setValue("officerEmpno", loggedinUser.username || "");
     setValue("officerName", loggedinUser.name || "");
     setValue("designation", loggedinUser.designation || "");
     setValue("department", loggedinUser.department || "");
@@ -449,6 +463,10 @@ export default function VisitorForm(props: any) {
       "vehicleentry",
     ];
 
+    if (isVehicleEntry === "Yes") {
+      officerFields.push("vehicleNo");
+    }
+
     if (showApprovingAuthority) {
       officerFields.push("approvingAuthority");
     }
@@ -490,11 +508,11 @@ export default function VisitorForm(props: any) {
         return;
       }
     }
-
+    // const requiresApproval = showApprovingAuthority;
+    // const autoApproved = !requiresApproval;
     const payload = {
       officerDetails: {
         officerEmpno: formValues.officerEmpno,
-        // officerName: formValues.officerName,
         designation: formValues.designation,
         department: formValues.department,
         intercom: formValues.intercom,
@@ -515,6 +533,10 @@ export default function VisitorForm(props: any) {
           ? dayjs(formValues.timeRange[1]).format("hh:mm A")
           : null,
         vehicleentry: formValues.vehicleentry,
+        vehicleNo:
+          isVehicleEntry === "Yes" ? formValues.vehicleNo.trim() : null,
+
+        approval_status: requiresManualApproval,
         approvingAuthorityEmpNo: formValues.approvingAuthority?.empNo ?? null,
       },
       visitors: rows,
@@ -651,6 +673,21 @@ export default function VisitorForm(props: any) {
               }
               disableClearable
             />
+            {isVehicleEntry === "Yes" && (
+              <FormTextField
+                name="vehicleNo"
+                label="Vehicle No."
+                control={control}
+                rules={{
+                  required: "Vehicle number is required",
+                  validate: (value: string) => {
+                    if (!value?.trim()) return "Vehicle number is required";
+                    return true;
+                  },
+                }}
+                error={errors.vehicleNo}
+              />
+            )}
 
             {showApprovingAuthority && (
               <FormAutocomplete

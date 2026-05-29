@@ -7,7 +7,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import { Button } from "@/app/core-components";
 import { useRouter } from "next/navigation";
 import GatePassGrid from "@/app/components/GatePassGrid";
-import GatePassDetailsDialog from "@/app/components/GatePassDetailsDialog";
+import ApprovalGatePassDetailsDialog from "@/app/components/ApprovalGatePassDetailsDialog";
 import {
   approveGatePass,
   approveGatePassMany,
@@ -22,9 +22,11 @@ export default function ApprovalsTable({
   mode?: "pending" | "approved";
 }) {
   const router = useRouter();
+
   const [selectedVisitor, setSelectedVisitor] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
+  const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const isPending = mode === "pending";
 
   return (
@@ -113,54 +115,44 @@ export default function ApprovalsTable({
         ]}
       />
 
-      <GatePassDetailsDialog
+      <ApprovalGatePassDetailsDialog
         open={Boolean(selectedVisitor)}
         visitor={selectedVisitor}
+        approving={approving}
+        rejecting={rejecting}
         onClose={() => setSelectedVisitor(null)}
-        title={
-          isPending ? "Pending Gate Pass Details" : "Approved Gate Pass Details"
-        }
-        actions={
-          isPending && selectedVisitor ? (
-            <>
-              <Button
-                color="error"
-                variant="outlined"
-                onClick={async () => {
-                  const result = await rejectGatePass(selectedVisitor.vId);
+        onApprove={async (visitor) => {
+          const ok = window.confirm(`Approve gate pass #${visitor.vId}?`);
+          if (!ok) return;
 
-                  if (!result.success) {
-                    alert(result.message);
-                    return;
-                  }
+          setApproving(true);
+          const result = await approveGatePass(visitor.vId);
+          setApproving(false);
 
-                  setSelectedVisitor(null);
-                  router.refresh();
-                }}
-              >
-                Reject
-              </Button>
+          if (!result.success) {
+            alert(result.message);
+            return;
+          }
 
-              <Button
-                color="success"
-                variant="contained"
-                onClick={async () => {
-                  const result = await approveGatePass(selectedVisitor.vId);
+          setSelectedVisitor(null);
+          router.refresh();
+        }}
+        onReject={async (visitor) => {
+          const ok = window.confirm(`Reject gate pass #${visitor.vId}?`);
+          if (!ok) return;
 
-                  if (!result.success) {
-                    alert(result.message);
-                    return;
-                  }
+          setRejecting(true);
+          const result = await rejectGatePass(visitor.vId);
+          setRejecting(false);
 
-                  setSelectedVisitor(null);
-                  router.refresh();
-                }}
-              >
-                Approve
-              </Button>
-            </>
-          ) : undefined
-        }
+          if (!result.success) {
+            alert(result.message);
+            return;
+          }
+
+          setSelectedVisitor(null);
+          router.refresh();
+        }}
       />
     </div>
   );

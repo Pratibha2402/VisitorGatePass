@@ -6,7 +6,7 @@ import { VisitorMultipleDetail } from "@/app/database/models/VisitorMultipleDeta
 import "@/app/database/models/associations";
 import dayjs from "dayjs";
 import { Employee } from "@/app/database/models/Employee";
-
+import { GATEPASS_APPROVAL_STATUS } from "@/app/enum";
 
 
 
@@ -253,11 +253,12 @@ async function getNextVisitorId(transaction: any) {
 }
 
 export async function createVisitorRequests(payload: any) {
+
   const transaction = await sequelize_misc.transaction();
 
   try {
     const { officerDetails, visitors } = payload;
-
+  const autoApproved = officerDetails.autoApproved === true;
     if (!visitors?.length) {
       await transaction.rollback();
 
@@ -285,6 +286,7 @@ export async function createVisitorRequests(payload: any) {
           address2: visitor.address2,
           contact: Number(visitor.phone),
           purpose: officerDetails.purpose,
+          vehicleNo: officerDetails.vehicleNo ?? null,
           employeeVisited: officerDetails.officerEmpno,
           empVisitedIcom: Number(officerDetails.intercom),
           fromDate: toDbDate(officerDetails.fromdate),
@@ -293,6 +295,11 @@ export async function createVisitorRequests(payload: any) {
           toTime: officerDetails.totime,
           createdBy:officerDetails.officerEmpno,
           approvingAuth: officerDetails.approvingAuthorityEmpNo ?? null,
+          approvingStatus: officerDetails.approval_status
+          ? GATEPASS_APPROVAL_STATUS.PENDING
+          : GATEPASS_APPROVAL_STATUS.APPROVED,
+
+          approvalDate: autoApproved ? new Date() : null,
           baggageStatus: visitor.laptopcarry === "Yes" ? 1 : 0,
           gpCreationDate: new Date(),
         },
@@ -332,3 +339,31 @@ export async function createVisitorRequests(payload: any) {
   }
 }
 
+
+// export async function isGatePassApprover(empNo: string, grade?: string) {
+//   const approverGrades = ["D", "E", "F", "G", "H", "I"];
+
+//   if (grade && approverGrades.includes(grade)) {
+//     return true;
+//   }
+
+//   const rows = await sequelize_misc.query(
+//     `
+//     SELECT HOD_EMP_ID
+//     FROM MISC.M_VISITOR_GATEPASS_HODS
+//     WHERE HOD_EMP_ID = :empNo
+
+//     UNION
+
+//     SELECT HOD_EMP_ID
+//     FROM MISC.M_VISITOR_GATEPASS_VEHICLE_HODS
+//     WHERE HOD_EMP_ID = :empNo
+//     `,
+//     {
+//       replacements: { empNo },
+//       type: QueryTypes.SELECT,
+//     },
+//   );
+
+//   return rows.length > 0;
+// }

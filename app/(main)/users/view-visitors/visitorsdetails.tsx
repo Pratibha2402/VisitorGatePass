@@ -11,7 +11,7 @@ import type {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import GatePassStatusChip from "@/app/components/GatePassStatusChip";
-
+import UserGatePassDetailsDialog from "@/app/components/UserGatePassDetailsDialog";
 function useDebounce<T>(value: T, delay = 500) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -51,6 +51,7 @@ export default function VisitorDetails({
     page: Number(searchParams.get("page") ?? 0),
     pageSize: Number(searchParams.get("pageSize") ?? 10),
   });
+  const [selectedVisitor, setSelectedVisitor] = useState<any | null>(null);
   //   useEffect(() => {
   //     async function loadVisitors() {
   //       setLoading(true);
@@ -125,8 +126,9 @@ export default function VisitorDetails({
           <Button
             size="small"
             variant="contained"
-            onClick={() =>
-              router.push(`/users/view-visitors/${params.row.vId}`)
+            onClick={
+              () => setSelectedVisitor(params.row)
+              //router.push(`/users/view-visitors/${params.row.vId}`)
             }
             startIcon={<VisibilityIcon />}
           >
@@ -203,6 +205,11 @@ export default function VisitorDetails({
         disableRowSelectionOnClick
       />
       {/* </div> */}
+      <UserGatePassDetailsDialog
+        open={Boolean(selectedVisitor)}
+        visitor={selectedVisitor}
+        onClose={() => setSelectedVisitor(null)}
+      />
     </div>
   );
 }

@@ -12,39 +12,39 @@ import { GATEPASS_APPROVAL_STATUS } from "@/app/enum";
 
 const APPROVER_GRADES = ["D", "E", "F", "G", "H", "I"];
 
-export async function canAccessGatePassApprover() {
-  const session = await getSession();
-  const user = session?.user;
+// export async function canAccessGatePassApprover() {
+//   const session = await getSession();
+//   const user = session?.user;
 
-  if (!user) return false;
+//   if (!user) return false;
 
-  const empNo = String(user.username ?? user.empNo ?? "");
-  const grade = String(user.grade ?? "");
+//   const empNo = String(user.username ?? user.empNo ?? "");
+//   const grade = String(user.grade ?? "");
 
-  if (APPROVER_GRADES.includes(grade)) {
-    return true;
-  }
+//   if (APPROVER_GRADES.includes(grade)) {
+//     return true;
+//   }
 
-  const rows = await sequelize_misc.query(
-    `
-    SELECT HOD_EMP_ID
-    FROM MISC.M_VISITOR_GATEPASS_HODS
-    WHERE HOD_EMP_ID = :empNo
+//   const rows = await sequelize_misc.query(
+//     `
+//     SELECT HOD_EMP_ID
+//     FROM MISC.M_VISITOR_GATEPASS_HODS
+//     WHERE HOD_EMP_ID = :empNo
 
-    UNION
+//     UNION
 
-    SELECT HOD_EMP_ID
-    FROM MISC.M_VISITOR_GATEPASS_VEHICLE_HODS
-    WHERE HOD_EMP_ID = :empNo
-    `,
-    {
-      replacements: { empNo },
-      type: QueryTypes.SELECT,
-    },
-  );
+//     SELECT HOD_EMP_ID
+//     FROM MISC.M_VISITOR_GATEPASS_VEHICLE_HODS
+//     WHERE HOD_EMP_ID = :empNo
+//     `,
+//     {
+//       replacements: { empNo },
+//       type: QueryTypes.SELECT,
+//     },
+//   );
 
-  return rows.length > 0;
-}
+//   return rows.length > 0;
+// }
 
 
 

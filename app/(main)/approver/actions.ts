@@ -2,12 +2,13 @@
 
 import { VisitorMultiple } from "@/app/database/models/Visitor_Master";
 import { getSession } from "@/app/api/auth/get-session";
-import { GATEPASS_APPROVAL_STATUS } from "@/app/enum";
-import { canAccessGatePassApprover } from "./api";
+import { GATEPASS_APPROVAL_STATUS, USER_ROLES } from "@/app/enum";
 import { revalidatePath } from "next/cache";
+import { Op } from "sequelize";
+import { hasRole } from "@/app/api";
 
 export async function approveGatePass(vId: number) {
-  const hasAccess = await canAccessGatePassApprover();
+  const hasAccess = await hasRole([USER_ROLES.APPROVER]);
 
   if (!hasAccess) {
     return {
@@ -38,8 +39,8 @@ export async function approveGatePass(vId: number) {
     approvalDate: new Date(),
   });
 
-  revalidatePath("/gatepass/approver/pending-approvals");
-  revalidatePath("/gatepass/approver/approved-requests");
+revalidatePath("/approver/pending-approvals");
+revalidatePath("/approver/approved-requests");
 
   return {
     success: true,
@@ -48,7 +49,7 @@ export async function approveGatePass(vId: number) {
 }
 
 export async function rejectGatePass(vId: number) {
-  const hasAccess = await canAccessGatePassApprover();
+  const hasAccess = await hasRole([USER_ROLES.APPROVER]);
 
   if (!hasAccess) {
     return {
@@ -89,7 +90,7 @@ export async function rejectGatePass(vId: number) {
 } 
 
 export async function approveGatePassMany(vIds: number[]) {
-  const hasAccess = await canAccessGatePassApprover();
+  const hasAccess = await hasRole([USER_ROLES.APPROVER]);
 
   if (!hasAccess) {
     return {

@@ -29,6 +29,7 @@ export const TITLE = {
 export const USER_ROLES = {
   ADMIN: "ADMIN",
   APPROVER:"APPROVER",
+  VEHICLE_APPROVER: "VEHICLE_APPROVER",
 };
 
 export const GATEPASS_APPROVAL_STATUS = {

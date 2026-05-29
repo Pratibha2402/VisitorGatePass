@@ -1,21 +1,15 @@
-import { canAccessGatePassApprover } from "@/app/(main)/approver/api";
+// import { isGatePassApprover } from "@/app/(main)/users/api";
 import { hasRole } from "@/app/api";
+import { getSession } from "@/app/api/auth/get-session";
 import { USER_ROLES } from "@/app/enum";
 import {
-  AddCircle,
-  AddLink,
-  AddShoppingCart,
   Assessment,
   PendingActions,
   SvgIconComponent,
-  CalendarMonth,
   NoteAdd,
   History,
-  InventoryOutlined,
-  Dvr,
-  AddToQueue,
-  CleaningServices,
-  PersonAdd,
+    PersonAdd,
+  AdminPanelSettings,
 } from "@mui/icons-material";
 
 export interface DrawerItem {
@@ -30,13 +24,10 @@ export interface DrawerItem {
 export async function getDrawerItems() {
   let drawerItems: Array<DrawerItem> = [];
 
-  const isAdmin = await hasRole([
-    USER_ROLES.ADMIN,
-   ]);
-  const isApprover = await hasRole([
-    USER_ROLES.APPROVER,
-  ]);
-  const canApproveGatePass = await canAccessGatePassApprover();
+const canApproveGatePass = await hasRole([USER_ROLES.APPROVER]);
+const isAdmin = await hasRole([USER_ROLES.ADMIN]);
+
+
    drawerItems = [
     ...drawerItems,
     {
@@ -66,26 +57,26 @@ if (canApproveGatePass) {
     },
   ];
 }
-  if (isAdmin ) {
-    drawerItems = [
-      ...drawerItems,
-      {
-        name: "Pending Complaints",
-        icon: PendingActions,
-        link: "/complaint-monitoring/pending-complaints",
-      },
-      {
-        name: "Closed Complaints",
-        icon: InventoryOutlined,
-        link: "/complaint-monitoring/closed-complaints",
-      },
-      {
-        name: "Downtime Reports",
-        icon: Assessment,
-        link: "/complaint-monitoring/downtime-reports",
-      },
-    ];
-  }
+if (isAdmin) {
+  drawerItems = [
+    ...drawerItems,
+    {
+      name: "Admin Gate Pass Approvals",
+      icon: PendingActions,
+      link: "/admin/approvals",
+    },
+    {
+      name: "Gate Pass Reports",
+      icon: Assessment,
+      link: "/admin/reports",
+    },
+    {
+      name: "Approver Authorization",
+      icon: AdminPanelSettings,
+      link: "/admin/authorizations",
+    },
+  ];
+}
 
   return drawerItems;
 }

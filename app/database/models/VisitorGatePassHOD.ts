@@ -1,4 +1,4 @@
-import sequelize from "@/app/database/db";
+import {sequelize_misc} from "@/app/database/db";
 import DataTypes from "sequelize";
 export const VisitorGatepassHods = sequelize_misc.define(
   "VisitorGatepassHods",

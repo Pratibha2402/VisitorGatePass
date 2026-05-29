@@ -10,6 +10,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/app/api/auth/get-session";
 import { env } from "process";
 import { Paper } from "@/app/core-components";
+import { hasRole } from "@/app/api";
+import { USER_ROLES } from "@/app/enum";
 
 export const metadata = {
   title: "Create Visitor",
@@ -22,6 +24,10 @@ export default async function CreateVisitorPage() {
   if (!session?.user) {
     redirect(env.CENTRAL_SIGNIN_URL as string);
   }
+  const canSelfApproveGatePass = await hasRole([USER_ROLES.APPROVER]);
+  const canSelfApproveVehicleGatePass = await hasRole([
+    USER_ROLES.VEHICLE_APPROVER,
+  ]);
 
   const empNo = session.user.username; // or session.user.username, depending on your API
   const loggedinUser = session.user; // await fetchEmployeebyUsername(empNo);
@@ -40,6 +46,8 @@ export default async function CreateVisitorPage() {
           loggedinUser={loggedinUser}
           approvingAuthority={approvingAuthority}
           approvingAuthorityVehicle={approvingAuthorityVehicle}
+          canSelfApproveGatePass={canSelfApproveGatePass}
+          canSelfApproveVehicleGatePass={canSelfApproveVehicleGatePass}
         />
       </Paper>
     </Page>

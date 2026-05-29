@@ -34,74 +34,52 @@ export default function GatePassGrid({
   dataGridProps,
 }: GatePassGridProps) {
   const columns: GridColDef[] = [
-    { field: "vId", headerName: "ID", width: 90 },
+    {
+      field: "vId",
+      headerName: "ID",
+      width: 75,
+    },
     {
       field: "visitorName",
       headerName: "Visitor",
       flex: 1,
-      minWidth: 160,
-      valueGetter: (_value: any, row: any) => row.details?.name ?? "",
-    },
-    { field: "companyName", headerName: "Company", flex: 1, minWidth: 160 },
-    { field: "contact", headerName: "Contact", width: 140 },
-    { field: "purpose", headerName: "Purpose", flex: 1, minWidth: 180 },
-    {
-      field: "visitFrom",
-      headerName: "From",
       minWidth: 170,
       valueGetter: (_value: any, row: any) =>
-        formatDateTime(row.fromDate, row.fromTime),
+        [row.details?.title, row.details?.name].filter(Boolean).join(" "),
     },
     {
-      field: "visitTo",
-      headerName: "To",
-      minWidth: 170,
-      valueGetter: (_value: any, row: any) =>
-        formatDateTime(row.toDate, row.toTime),
+      field: "contact",
+      headerName: "Mobile",
+      width: 130,
     },
     {
-      field: "hostName",
-      headerName: "Host",
+      field: "purpose",
+      headerName: "Purpose",
       flex: 1,
-      minWidth: 160,
-      valueGetter: (_value: any, row: any) =>
-        row.visitedEmployee?.name ?? row.createdBy ?? "-",
+      minWidth: 150,
     },
     {
-      field: "laptop",
-      headerName: "Laptop",
-      width: 110,
-      renderCell: (params: any) => (
-        <Chip
-          size="small"
-          label={params.row.baggageStatus === 1 ? "Yes" : "No"}
-          color={params.row.baggageStatus === 1 ? "success" : "default"}
-          variant="outlined"
-        />
-      ),
+      field: "companyName",
+      headerName: "Company",
+      flex: 1,
+      minWidth: 150,
     },
-    ...(showStatus
-      ? [
-          {
-            field: "status",
-            headerName: "Status",
-            width: 180,
-            renderCell: (params: any) => (
-              <GatePassStatusChip row={params.row} />
-            ),
-          },
-        ]
-      : []),
+    {
+      field: "address1",
+      headerName: "Address",
+      flex: 1.4,
+      minWidth: 150,
+    },
     ...(actions.length
       ? [
           {
             field: "actions",
             headerName: "Actions",
-            width: Math.max(160, actions.length * 115),
+            width: 330,
             sortable: false,
             filterable: false,
             renderCell: (params: any) => (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-1">
                 {actions
                   .filter((action) => !action.show || action.show(params.row))
                   .map((action) => (
@@ -124,7 +102,7 @@ export default function GatePassGrid({
   ];
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full min-w-0">
       <DataGrid
         rows={rows}
         columns={columns}
@@ -142,14 +120,29 @@ export default function GatePassGrid({
         onRowSelectionModelChange={(model: any) => {
           if (!onSelectionChange) return;
 
-          const ids =
-            model?.ids instanceof Set
-              ? Array.from(model.ids)
-              : Array.isArray(model)
-                ? model
-                : [];
+          if (model?.ids instanceof Set) {
+            const ids = Array.from(model.ids).map(Number);
 
-          onSelectionChange(ids.map(Number));
+            if (model.type === "exclude") {
+              const excluded = new Set(ids);
+              onSelectionChange(
+                rows
+                  .map((row) => Number(row.vId))
+                  .filter((id) => !excluded.has(id)),
+              );
+              return;
+            }
+
+            onSelectionChange(ids);
+            return;
+          }
+
+          if (Array.isArray(model)) {
+            onSelectionChange(model.map(Number));
+            return;
+          }
+
+          onSelectionChange([]);
         }}
         pageSizeOptions={[5, 10, 20, 50]}
         {...dataGridProps}

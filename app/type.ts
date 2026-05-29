@@ -10,6 +10,7 @@ export type VisitorFormValues = {
   // fromdate: Date | null;
   // todate: Date | null;
   vehicleentry: string;
+  vehicleNo: string;
   approvingAuthority: any | null;
   company: string;
   title: string;
