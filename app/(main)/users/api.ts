@@ -7,6 +7,7 @@ import "@/app/database/models/associations";
 import dayjs from "dayjs";
 import { Employee } from "@/app/database/models/Employee";
 import { GATEPASS_APPROVAL_STATUS } from "@/app/enum";
+import { sendVisitorGatePassCreatedMail } from "@/app/mail/gatepass-created";
 
 
 
@@ -318,10 +319,17 @@ export async function createVisitorRequests(payload: any) {
         { transaction },
       );
     }
+await transaction.commit();
 
-    await transaction.commit();
+  if (!autoApproved) {
+    try {
+      await sendVisitorGatePassCreatedMail(visitorIds);
+    } catch (mailError) {
+      console.error("Visitor gate pass approval mail failed:", mailError);
+    }
+  }
 
-    return {
+   return {
       success: true,
       visitorIds,
       message: "Visitors submitted successfully.",

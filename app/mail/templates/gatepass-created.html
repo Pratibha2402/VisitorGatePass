@@ -1,0 +1,89 @@
+<html>
+  <head>
+    <style>
+      h2 {
+        text-align: center;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      td {
+        padding: 12px;
+        border: 1px solid #ccc;
+      }
+
+      .wrapper {
+        width: 720px;
+        border: 8px solid #eee;
+        padding: 24px;
+        margin: auto;
+        font-family: Arial, sans-serif;
+      }
+
+      .note {
+        text-align: center;
+        color: gray;
+        margin-top: 32px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <h2>{{heading}}</h2>
+
+      <p>Dear {{salutation}},</p>
+
+      <p>
+        A new visitor gate pass has been created. The details are mentioned
+        below:
+      </p>
+
+      <table>
+        <tr>
+          <td><b>Gate Pass ID</b></td>
+          <td>{{gatePassId}}</td>
+        </tr>
+        <tr>
+          <td><b>Visitor Name</b></td>
+          <td>{{visitorName}}</td>
+        </tr>
+        <tr>
+          <td><b>Visitor Mobile</b></td>
+          <td>{{visitorMobile}}</td>
+        </tr>
+        <tr>
+          <td><b>Company</b></td>
+          <td>{{visitorCompany}}</td>
+        </tr>
+        <tr>
+          <td><b>Purpose</b></td>
+          <td>{{purpose}}</td>
+        </tr>
+        <tr>
+          <td><b>Host Name</b></td>
+          <td>{{hostName}}</td>
+        </tr>
+        <tr>
+          <td><b>Visit Date</b></td>
+          <td>{{visitDate}}</td>
+        </tr>
+        <tr>
+          <td><b>Status</b></td>
+          <td>{{status}}</td>
+        </tr>
+      </table>
+
+      <p>
+        Kindly review the visitor details and take necessary action.
+      </p>
+
+      <p class="note">
+        <small>This is a system generated email. Please do not reply.</small>
+      </p>
+    </div>
+  </body>
+</html>
