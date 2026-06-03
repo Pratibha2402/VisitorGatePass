@@ -4,9 +4,10 @@ import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { PersonAdd, PersonAddAltRounded } from "@mui/icons-material";
+import { PersonAdd } from "@mui/icons-material";
 import { submitVisitorRequests } from "../actions";
-
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   normalize,
   isEmpty,
@@ -19,17 +20,13 @@ import {
   Button,
   FormAutocomplete,
   FormDateRangePicker,
-  FormTimeRangePicker,
   FormTextField,
-  Typography,
   useForm,
   DataGrid,
   GridColDef,
   GridRowModes,
   GridActionsCellItem,
   GridRowEditStopReasons,
-  Box,
-  Icon,
 } from "@/app/core-components";
 
 import type {
@@ -48,13 +45,13 @@ import {
   NATIONALITY,
   VEHICLENTRY,
   LAPTOPCARRYOPTIONS,
+  ALLOWED_TIME_SLOTS,
 } from "@/app/enum";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import { VisitorFormValues, VisitorGridRow } from "@/app/type";
 import dayjs, { Dayjs } from "dayjs";
-
 const today = dayjs().startOf("day");
 const minTime = dayjs().hour(9).minute(0).second(0).millisecond(0); // 9:00 AM
 const maxTime = dayjs().hour(16).minute(30).second(0).millisecond(0); // 4:30 PM
@@ -70,7 +67,6 @@ const getClampedStartTime = () => {
   if (now.isAfter(maxTime)) return maxTime;
   return now;
 };
-
 const defaultValues: VisitorFormValues = {
   officerEmpno: "",
   officerName: "",
@@ -79,9 +75,8 @@ const defaultValues: VisitorFormValues = {
   intercom: "",
   purpose: "",
   dateRange: [null, null], // ✅ today → today
-  timeRange: [null, null],
-  // fromdate: null,
-  // todate: null,
+  fromTime: "",
+  toTime: "",
   vehicleentry: "No",
   vehicleNo: "",
   laptopcarry: "No",
@@ -118,7 +113,7 @@ export default function VisitorForm(props: any) {
   } = useForm<VisitorFormValues>({
     defaultValues,
   });
-
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [gridError, setGridError] = useState("");
@@ -453,13 +448,15 @@ export default function VisitorForm(props: any) {
     },
   ];
   const handleSaveAllVisitors = async () => {
+    setLoading(true);
     setGridError("");
 
     const officerFields: (keyof VisitorFormValues)[] = [
       "intercom",
       "purpose",
       "dateRange",
-      "timeRange",
+      "fromTime",
+      "toTime",
       "vehicleentry",
     ];
 
@@ -492,22 +489,22 @@ export default function VisitorForm(props: any) {
     const formValues = getValues();
 
     const [startDate, endDate] = formValues.dateRange || [null, null];
-    const [startTime, endTime] = formValues.timeRange || [null, null];
+    const [startTime, endTime] = [formValues.fromTime, formValues.toTime];
 
-    // ✅ CROSS VALIDATION
-    if (startDate && endDate && startTime && endTime) {
-      const startDateTime = dayjs(startDate)
-        .hour(dayjs(startTime).hour())
-        .minute(dayjs(startTime).minute());
+    // // ✅ CROSS VALIDATION
+    // if (startDate && endDate && startTime && endTime) {
+    //   const startDateTime = dayjs(startDate)
+    //     .hour(dayjs(startTime).hour())
+    //     .minute(dayjs(startTime).minute());
 
-      const endDateTime = dayjs(endDate)
-        .hour(dayjs(endTime).hour())
-        .minute(dayjs(endTime).minute());
-      if (endDateTime.isBefore(startDateTime)) {
-        setGridError("End date & time must be after start date & time");
-        return;
-      }
-    }
+    //   const endDateTime = dayjs(endDate)
+    //     .hour(dayjs(endTime).hour())
+    //     .minute(dayjs(endTime).minute());
+    //   if (endDateTime.isBefore(startDateTime)) {
+    //     setGridError("End date & time must be after start date & time");
+    //     return;
+    //   }
+    // }
     // const requiresApproval = showApprovingAuthority;
     // const autoApproved = !requiresApproval;
     const payload = {
@@ -525,13 +522,8 @@ export default function VisitorForm(props: any) {
           ? dayjs(formValues.dateRange[1]).format("YYYY-MM-DD")
           : null,
 
-        fromtime: formValues.timeRange[0]
-          ? dayjs(formValues.timeRange[0]).format("hh:mm A")
-          : null,
-
-        totime: formValues.timeRange[1]
-          ? dayjs(formValues.timeRange[1]).format("hh:mm A")
-          : null,
+        fromtime: formValues.fromTime,
+        totime: formValues.toTime,
         vehicleentry: formValues.vehicleentry,
         vehicleNo:
           isVehicleEntry === "Yes" ? formValues.vehicleNo.trim() : null,
@@ -541,17 +533,35 @@ export default function VisitorForm(props: any) {
       },
       visitors: rows,
     };
+    try {
+      const result = await submitVisitorRequests(payload);
 
-    const result = await submitVisitorRequests(payload);
+      if (!result.success) {
+        setGridError(result.message || "Unable to submit visitors.");
+        toast.error(result.message || "Failed to submit visitors.");
+        return;
+      }
 
-    if (!result.success) {
-      setGridError(result.message || "Unable to submit visitors.");
-      return;
+      router.push("/users/view-visitors");
+      toast.success(
+        `Visitors submitted successfully. IDs: ${result.visitorIds.join(", ")}`,
+      );
+    } catch (error: any) {
+      setGridError(error.message || "Failed to submit visitors.");
+      toast.error("Failed to submit visitors.");
+    } finally {
+      setLoading(false);
     }
 
-    alert(
-      `Visitors submitted successfully. IDs: ${result.visitorIds.join(", ")}`,
-    );
+    // if (!result.success) {
+    //   setGridError(result.message || "Unable to submit visitors.");
+    //   toast.error("Failed to submit visitors.");
+    //   return;
+    // }
+
+    // alert(
+    //   `Visitors submitted successfully. IDs: ${result.visitorIds.join(", ")}`,
+    // );
   };
 
   return (
@@ -629,7 +639,7 @@ export default function VisitorForm(props: any) {
               }}
             />
 
-            <FormTimeRangePicker
+            {/* <FormTimeRangePicker
               name="timeRange"
               label="Time Range"
               control={control}
@@ -648,6 +658,43 @@ export default function VisitorForm(props: any) {
                   }
 
                   if (end.isBefore(start)) {
+                    return "End time must be after start time";
+                  }
+
+                  return true;
+                },
+              }}
+            /> */}
+            <FormAutocomplete
+              name="fromTime"
+              label="From Time"
+              control={control}
+              options={ALLOWED_TIME_SLOTS}
+              getOptionLabel={(option: string) => option}
+              rules={{ required: "From time is required" }}
+              error={errors.fromTime}
+            />
+
+            <FormAutocomplete
+              name="toTime"
+              label="To Time"
+              control={control}
+              options={ALLOWED_TIME_SLOTS}
+              getOptionLabel={(option: string) => option}
+              error={errors.toTime}
+              rules={{
+                required: "To time is required",
+                validate: (toTime: string) => {
+                  const fromTime = getValues("fromTime");
+
+                  if (!fromTime || !toTime) {
+                    return "Time range is required";
+                  }
+
+                  const from = dayjs(fromTime, "hh:mm A");
+                  const to = dayjs(toTime, "hh:mm A");
+
+                  if (!to.isAfter(from)) {
                     return "End time must be after start time";
                   }
 

@@ -17,8 +17,10 @@ import {
   deleteNormalGatePassApprover,
   deleteVehicleGatePassApprover,
 } from "../actions";
-import { searchEmployees } from "../api";
+// import { searchEmployees } from "../api";
 import { useRouter } from "next/navigation";
+import { fetchEmployeebyUsername } from "@/app/api";
+import { toast } from "sonner";
 
 type FormValues = {
   employee: any | null;
@@ -30,10 +32,12 @@ export default function AuthorizationForm({
   departments,
   normalRows,
   vehicleRows,
+  employees,
 }: {
   departments: any[];
   normalRows: any[];
   vehicleRows: any[];
+  employees: any[];
 }) {
   const router = useRouter();
   const [employeeOptions, setEmployeeOptions] = useState<any[]>([]);
@@ -53,11 +57,29 @@ export default function AuthorizationForm({
   });
 
   const type = watch("type");
+  const getDepartmentName = (departmentCode: string) => {
+    return (
+      departments.find((dept) => dept.departmentCodeUnique === departmentCode)
+        ?.department ?? ""
+    );
+  };
 
   const normalColumns: GridColDef[] = [
     { field: "rowId", headerName: "ID", width: 90 },
     { field: "hodEmpId", headerName: "Employee No", width: 150 },
+    {
+      field: "approverName",
+      headerName: "Approver Name",
+      flex: 1,
+      valueGetter: (_value: any, row: any) => row.approver?.name ?? "",
+    },
     { field: "deptCode", headerName: "Department Code", flex: 1 },
+    {
+      field: "authorizedDepartment",
+      headerName: "Authorized Department",
+      flex: 1,
+      valueGetter: (_value: any, row: any) => getDepartmentName(row.deptCode),
+    },
     {
       field: "actions",
       headerName: "Actions",
@@ -94,7 +116,23 @@ export default function AuthorizationForm({
   const vehicleColumns: GridColDef[] = [
     { field: "rowId", headerName: "ID", width: 90 },
     { field: "hodEmpId", headerName: "Employee No", width: 150 },
-    { field: "deptCode", headerName: "Department Code", flex: 1 },
+    {
+      field: "approverName",
+      headerName: "Approver Name",
+      flex: 1,
+      valueGetter: (_value: any, row: any) => row.approver?.name ?? "",
+    },
+    {
+      field: "deptCode",
+      headerName: "Department Code",
+      flex: 1,
+    },
+    {
+      field: "authorizedDepartment",
+      headerName: "Authorized Department",
+      flex: 1,
+      valueGetter: (_value: any, row: any) => getDepartmentName(row.deptCode),
+    },
     {
       field: "actions",
       headerName: "Actions",
@@ -155,19 +193,21 @@ export default function AuthorizationForm({
           name="employee"
           label="Employee"
           control={control}
-          options={employeeOptions}
+          options={employees}
           rules={{ required: "Employee is required" }}
           error={errors.employee}
           getOptionLabel={(option: any) =>
-            option ? `${option.name} (${option.empNo})` : ""
+            option
+              ? `${option.name} (${option.empNo}) (${option.department})`
+              : ""
           }
           isOptionEqualToValue={(option: any, value: any) =>
             option?.empNo === value?.empNo
           }
           onInputChange={async (_event: any, value: string) => {
             if (value.length < 3) return;
-            const rows = await searchEmployees(value);
-            setEmployeeOptions(rows);
+            //const rows = await searchEmployees(value);
+            setEmployeeOptions(employees);
           }}
         />
 
@@ -179,10 +219,12 @@ export default function AuthorizationForm({
           rules={{ required: "Department is required" }}
           error={errors.department}
           getOptionLabel={(option: any) =>
-            option ? `${option.department} (${option.deptCode})` : ""
+            option
+              ? `${option.department} (${option.departmentCodeUnique})`
+              : ""
           }
           isOptionEqualToValue={(option: any, value: any) =>
-            option?.deptCode === value?.deptCode
+            option?.departmentCodeUnique === value?.departmentCodeUnique
           }
         />
       </div>
@@ -190,29 +232,39 @@ export default function AuthorizationForm({
       <Button
         variant="contained"
         onClick={async () => {
-          const valid = await trigger(["employee", "department"]);
+          try {
+            const valid = await trigger(["employee", "department"]);
 
-          if (!valid) return;
+            if (!valid) return;
 
-          const values = getValues();
+            const values = getValues();
 
-          const payload = {
-            empNo: Number(values.employee.empNo),
-            deptCode: values.department.deptCode,
-          };
+            const payload = {
+              empNo: Number(values.employee.empNo),
+              deptCode: values.department.departmentCodeUnique,
+            };
 
-          const result =
-            type === "VEHICLE"
-              ? await addVehicleGatePassApprover(payload)
-              : await addNormalGatePassApprover(payload);
+            const result =
+              type === "VEHICLE"
+                ? await addVehicleGatePassApprover(payload)
+                : await addNormalGatePassApprover(payload);
 
-          if (!result.success) {
-            alert(result.message);
-            return;
+            if (!result.success) {
+              toast.error(
+                result.message ||
+                  "An error occurred while adding the approver.",
+              );
+
+              return;
+            }
+            toast.success("Approver added successfully.");
+          } catch (err) {
+            toast.error("An error occurred while adding the approver.");
+          } finally {
+            router.refresh();
           }
 
-          alert(result.message);
-          router.refresh();
+          //alert(result.message);
         }}
       >
         Add Authorization

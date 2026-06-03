@@ -9,6 +9,7 @@ import UserGatePassDetailsDialog from "@/app/components/UserGatePassDetailsDialo
 import GatePassStatusChip from "@/app/components/GatePassStatusChip";
 import { adminApproveGatePass, adminRejectGatePass } from "../actions";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function AdminApprovalsTable({ rows }: { rows: any[] }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function AdminApprovalsTable({ rows }: { rows: any[] }) {
 
   const columns: GridColDef[] = useMemo(
     () => [
+      { field: "vId", headerName: "Visitor ID", width: 100 },
       {
         field: "visitorName",
         headerName: "Visitor",
@@ -57,14 +59,23 @@ export default function AdminApprovalsTable({ rows }: { rows: any[] }) {
               variant="contained"
               startIcon={<CheckCircleIcon />}
               onClick={async () => {
-                const result = await adminApproveGatePass(params.row.vId);
-
-                if (!result.success) {
-                  alert(result.message);
+                try {
+                  const result = await adminApproveGatePass(params.row.vId);
+                  if (!result.success) {
+                    alert(result.message);
+                    toast.error("Failed to approve the gate pass.");
+                    return;
+                  }
+                  toast.success("Gate pass approved successfully.");
+                } catch (err) {
+                  alert("An error occurred while approving the gate pass.");
+                  toast.error(
+                    "An error occurred while approving the gate pass.",
+                  );
                   return;
+                } finally {
+                  router.refresh();
                 }
-
-                router.refresh();
               }}
             >
               Approve
@@ -76,14 +87,21 @@ export default function AdminApprovalsTable({ rows }: { rows: any[] }) {
               variant="outlined"
               startIcon={<CancelIcon />}
               onClick={async () => {
-                const result = await adminRejectGatePass(params.row.vId);
+                try {
+                  const result = await adminRejectGatePass(params.row.vId);
 
-                if (!result.success) {
-                  alert(result.message);
-                  return;
+                  if (!result.success) {
+                    toast.error("Failed to reject the gate pass.");
+                    return;
+                  }
+                  toast.success("Gate pass rejected successfully.");
+                } catch (err) {
+                  toast.error(
+                    "An error occurred while rejecting the gate pass.",
+                  );
+                } finally {
+                  router.refresh();
                 }
-
-                router.refresh();
               }}
             >
               Reject

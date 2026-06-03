@@ -6,9 +6,9 @@ export type VisitorFormValues = {
   intercom: string;
   purpose: string;
   dateRange: [Date | null, Date | null];
-  timeRange: [Date | null, Date | null];
-  // fromdate: Date | null;
-  // todate: Date | null;
+  // timeRange: [Date | null, Date | null];
+  fromTime: string,
+  toTime: string,
   vehicleentry: string;
   vehicleNo: string;
   approvingAuthority: any | null;
@@ -37,3 +37,9 @@ export type VisitorGridRow = {
   nationality: string;
   laptopcarry: string;
 };
+
+export interface Department {
+  department: string;
+  departmentCodeUnique: string;
+}
+

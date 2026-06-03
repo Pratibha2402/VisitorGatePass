@@ -63,7 +63,7 @@ export default function GatePassDetailsContent({
 
       <Divider />
 
-      <InfoSection title="Host Information">
+      <InfoSection title="Officer Information">
         <InfoItem label="Created By" value={visitor.visitedEmployee?.name} />
         <InfoItem label="Intercom" value={visitor.empVisitedIcom} />
       </InfoSection>

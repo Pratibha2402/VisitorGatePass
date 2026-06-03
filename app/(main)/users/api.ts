@@ -14,7 +14,7 @@ import { sendVisitorGatePassCreatedMail } from "@/app/mail/gatepass-created";
 export async function fetchApprovingAuthority(empno: string) {
   const sql = `
 WITH emp_dept AS (
-  SELECT DEPT_CD
+  SELECT DEPT_CD_UNIQUE
   FROM M_EMPLOYEE_ALL
   WHERE EMPNO = :empno
 )
@@ -26,7 +26,7 @@ SELECT DISTINCT
 FROM (
   SELECT e.EMPNO, e.NAME, e.DESIG, e.DEPT
   FROM M_EMPLOYEE_ALL e
-  JOIN emp_dept d ON e.DEPT_CD = d.DEPT_CD
+  JOIN emp_dept d ON e.DEPT_CD_UNIQUE = d.DEPT_CD_UNIQUE
   WHERE e.GRADE IN ('D', 'E', 'F', 'G', 'H', 'I')
     AND e.DOJ IS NOT NULL
     AND e.RND_STATUS = :status
@@ -36,7 +36,7 @@ FROM (
 
   SELECT e2.EMPNO, e2.NAME, e2.DESIG, e2.DEPT
   FROM M_VISITOR_GATEPASS_HODS h
-  JOIN emp_dept d ON h.DEPT_CD = d.DEPT_CD
+  JOIN emp_dept d ON h.DEPT_CD= d.DEPT_CD_UNIQUE
   JOIN M_EMPLOYEE_ALL e2 ON e2.EMPNO = h.HOD_EMP_ID
   WHERE e2.RND_STATUS = :status
     AND e2.IS_EMPLOYEE = :isEmployee
@@ -61,7 +61,7 @@ emp_base AS (
     -- Get employee base details once
     SELECT 
         EMPNO,
-        DEPT_CD,
+        DEPT_CD_UNIQUE,
         CONTROLLING_OFFICER
     FROM MISC.M_EMPLOYEE_ALL
     WHERE EMPNO = :empno
@@ -135,7 +135,7 @@ FROM (
         e2.DEPT
     FROM MISC.M_VISITOR_GATEPASS_VEHICLE_HODS h
     JOIN emp_base eb 
-        ON h.DEPT_CD = eb.DEPT_CD
+        ON h.DEPT_CD = eb.DEPT_CD_UNIQUE
     JOIN MISC.M_EMPLOYEE_ALL e2 
         ON e2.EMPNO = h.HOD_EMP_ID
     WHERE e2.RND_STATUS = :status
@@ -172,6 +172,7 @@ export async function fetchVisitorRequests(empNo : string) {
       required: false,
     },
   ],
+  order: [["gpCreationDate", "DESC"]],
 
   
 });

@@ -5,7 +5,8 @@ import { AdminPanelSettings } from "@mui/icons-material";
 import { hasRole } from "@/app/api";
 import { USER_ROLES } from "@/app/enum";
 import {
-  fetchDepartments,
+  fetchAllDepartments,
+  fetchAllEmployees,
   fetchNormalApproverAuthorizations,
   fetchVehicleApproverAuthorizations,
 } from "../api";
@@ -18,10 +19,10 @@ export default async function GatePassAuthorizationsPage() {
     redirect("/users/view-visitors");
   }
 
-  const departments = await fetchDepartments();
+  const departments = await fetchAllDepartments();
   const normalRows = await fetchNormalApproverAuthorizations();
   const vehicleRows = await fetchVehicleApproverAuthorizations();
-
+  const employees = await fetchAllEmployees();
   return (
     <Page title="Gate Pass Approver Authorization" icon={AdminPanelSettings}>
       <Paper
@@ -32,6 +33,7 @@ export default async function GatePassAuthorizationsPage() {
           departments={departments}
           normalRows={normalRows}
           vehicleRows={vehicleRows}
+          employees={employees}
         />
       </Paper>
     </Page>

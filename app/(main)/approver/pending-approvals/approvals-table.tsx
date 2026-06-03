@@ -13,6 +13,8 @@ import {
   approveGatePassMany,
   rejectGatePass,
 } from "../actions";
+import { toast } from "sonner";
+import { error } from "console";
 
 export default function ApprovalsTable({
   rows,
@@ -39,21 +41,30 @@ export default function ApprovalsTable({
             disabled={selectedIds.length === 0}
             startIcon={<CheckCircleIcon />}
             onClick={async () => {
-              const ok = window.confirm(
-                `Approve ${selectedIds.length} selected gate pass(es)?`,
-              );
+              // const ok = window.confirm(
+              //   `Approve ${selectedIds.length} selected gate pass(es)?`,
+              // );
 
-              if (!ok) return;
+              // if (!ok) return;
 
-              const result = await approveGatePassMany(selectedIds);
+              try {
+                const result = await approveGatePassMany(selectedIds);
+                if (!result.success) {
+                  toast.error(result.message);
+                  return;
+                }
 
-              if (!result.success) {
-                alert(result.message);
-                return;
+                toast.success(
+                  `Approved ${selectedIds.length} gate pass(es) successfully.`,
+                );
+              } catch (err) {
+                toast.error(
+                  "An error occurred while approving the gate passes.",
+                );
+              } finally {
+                setSelectedIds([]);
+                router.refresh();
               }
-
-              setSelectedIds([]);
-              router.refresh();
             }}
           >
             Approve Selected
@@ -79,17 +90,21 @@ export default function ApprovalsTable({
             variant: "contained",
             show: () => isPending,
             onClick: async (row) => {
-              const ok = window.confirm(`Approve gate pass #${row.vId}?`);
-              if (!ok) return;
+              // const ok = window.confirm(`Approve gate pass #${row.vId}?`);
+              // if (!ok) return;
+              try {
+                const result = await approveGatePass(row.vId);
 
-              const result = await approveGatePass(row.vId);
-
-              if (!result.success) {
-                alert(result.message);
-                return;
+                if (!result.success) {
+                  toast.error(result.message);
+                  return;
+                }
+                toast.success(`Approved gate pass #${row.vId} successfully.`);
+              } catch (err) {
+                toast.error("An error occurred while approving the gate pass.");
+              } finally {
+                router.refresh();
               }
-
-              router.refresh();
             },
           },
           {
@@ -99,17 +114,22 @@ export default function ApprovalsTable({
             variant: "outlined",
             show: () => isPending,
             onClick: async (row) => {
-              const ok = window.confirm(`Reject gate pass #${row.vId}?`);
-              if (!ok) return;
+              // const ok = window.confirm(`Reject gate pass #${row.vId}?`);
+              // if (!ok) return;
+              try {
+                const result = await rejectGatePass(row.vId);
 
-              const result = await rejectGatePass(row.vId);
+                if (!result.success) {
+                  toast.error(result.message);
+                  return;
+                }
 
-              if (!result.success) {
-                alert(result.message);
-                return;
+                toast.success(`Rejected gate pass #${row.vId} successfully.`);
+              } catch (err) {
+                toast.error("An error occurred while rejecting the gate pass.");
+              } finally {
+                router.refresh();
               }
-
-              router.refresh();
             },
           },
         ]}
@@ -122,36 +142,46 @@ export default function ApprovalsTable({
         rejecting={rejecting}
         onClose={() => setSelectedVisitor(null)}
         onApprove={async (visitor) => {
-          const ok = window.confirm(`Approve gate pass #${visitor.vId}?`);
-          if (!ok) return;
+          // const ok = window.confirm(`Approve gate pass #${visitor.vId}?`);
+          // if (!ok) return;
+          try {
+            setApproving(true);
+            const result = await approveGatePass(visitor.vId);
+            setApproving(false);
 
-          setApproving(true);
-          const result = await approveGatePass(visitor.vId);
-          setApproving(false);
+            if (!result.success) {
+              toast.error(result.message);
+              return;
+            }
 
-          if (!result.success) {
-            alert(result.message);
-            return;
+            toast.success(`Approved gate pass #${visitor.vId} successfully.`);
+          } catch (err) {
+            toast.error("An error occurred while approving the gate pass.");
+          } finally {
+            setSelectedVisitor(null);
+            router.refresh();
           }
-
-          setSelectedVisitor(null);
-          router.refresh();
         }}
         onReject={async (visitor) => {
-          const ok = window.confirm(`Reject gate pass #${visitor.vId}?`);
-          if (!ok) return;
+          // const ok = window.confirm(`Reject gate pass #${visitor.vId}?`);
+          // if (!ok) return;
 
-          setRejecting(true);
-          const result = await rejectGatePass(visitor.vId);
-          setRejecting(false);
+          try {
+            setRejecting(true);
+            const result = await rejectGatePass(visitor.vId);
+            setRejecting(false);
 
-          if (!result.success) {
-            alert(result.message);
-            return;
+            if (!result.success) {
+              toast.error(result.message);
+              return;
+            }
+            toast.success(`Rejected gate pass #${visitor.vId} successfully.`);
+          } catch (error) {
+            toast.error("An error occurred while rejecting the gate pass.");
+          } finally {
+            setSelectedVisitor(null);
+            router.refresh();
           }
-
-          setSelectedVisitor(null);
-          router.refresh();
         }}
       />
     </div>

@@ -9,6 +9,7 @@ import { VisitorGatepassHods } from "@/app/database/models/VisitorGatePassHOD";
 import { VisitorGatepassVehicleHods } from "@/app/database/models/VisitorGatePassVehicleHOD";
 import "@/app/database/models/associations";
 import { GATEPASS_APPROVAL_STATUS } from "@/app/enum";
+import {Department} from "@/app/type";
 
 const includeVisitorDetails = [
   {
@@ -47,56 +48,123 @@ export async function fetchAllGatePassReports() {
   return rows.map((row: any) => row.get({ plain: true }));
 }
 
-export async function searchEmployees(query: string) {
-  if (!query?.trim()) return [];
+// export async function searchEmployees(query: string) {
+//   if (!query?.trim()) return [];
 
-  return sequelize_misc.query(
-    `
-    SELECT
-      EMPNO AS "empNo",
-      NAME AS "name",
-      DESIG AS "designation",
-      DEPT AS "department",
-      DEPT_CD AS "deptCode",
-      GRADE AS "grade"
-    FROM MISC.M_EMPLOYEE_ALL
-    WHERE RND_STATUS = 'ACTIVE'
-      AND IS_EMPLOYEE = 1
-      AND (
-        LOWER(NAME) LIKE LOWER(:search)
-        OR TO_CHAR(EMPNO) LIKE :search
+//   return sequelize_misc.query(
+//     `
+//     SELECT
+//       EMPNO AS "empNo",
+//       NAME AS "name",
+//       DESIG AS "designation",
+//       DEPT AS "department",
+//       DEPT_CD AS "deptCode",
+//       GRADE AS "grade"
+//     FROM MISC.M_EMPLOYEE_ALL
+//     WHERE RND_STATUS = 'ACTIVE'
+//       AND IS_EMPLOYEE = 1
+//       AND (
+//         LOWER(NAME) LIKE LOWER(:search)
+//         OR TO_CHAR(EMPNO) LIKE :search
+//       )
+//     ORDER BY NAME
+//     `,
+//     {
+//       replacements: {
+//         search: `%${query}%`,
+//       },
+//       type: QueryTypes.SELECT,
+//     },
+//   );
+// }
+
+// export async function searchEmployees(query: string) {
+//   if (!query?.trim()) return [];
+
+//   const search = `%${query.trim()}%`;
+
+//   const rows = await Employee.findAll({
+//     where: {
+//       rndStatus: "ACTIVE",
+//       isEmployee: 1,
+//       [Op.or]: [
+//         {
+//           name: {
+//             [Op.like]: search,
+//           },
+//         },
+//         sequelize_misc.where(
+//           sequelize_misc.cast(sequelize_misc.col("EMPNO"), "VARCHAR2"),
+//           {
+//             [Op.like]: search,
+//           },
+//         ),
+//       ],
+//     },
+//     order: [["name", "ASC"]],
+//     raw: true,
+//   });
+
+//   return rows;
+// }
+
+export async function fetchAllDepartments() {
+  let depts: Array<Department> = JSON.parse(
+    JSON.stringify(
+      await Employee.findAll({
+        where: { rndStatus: "ACTIVE", isEmployee: 1 },
+        attributes: ["department", "departmentCodeUnique"],
+      })
+    )
+  );
+  depts = depts.filter(
+    (dept, index, self) =>
+      index ===
+      self.findIndex(
+        (t: any) => t.departmentCodeUnique === dept.departmentCodeUnique
       )
-    ORDER BY NAME
-    `,
-    {
-      replacements: {
-        search: `%${query}%`,
-      },
-      type: QueryTypes.SELECT,
-    },
   );
+  depts = depts.toSorted((a, b) => a.department.localeCompare(b.department));
+  return depts;
 }
 
-export async function fetchDepartments() {
-  return sequelize_misc.query(
-    `
-    SELECT DISTINCT
-      DEPT_CD AS "deptCode",
-      DEPT AS "department"
-    FROM MISC.M_EMPLOYEE_ALL
-    WHERE DEPT_CD IS NOT NULL
-      AND DEPT IS NOT NULL
-      AND RND_STATUS = 'ACTIVE'
-    ORDER BY DEPT
-    `,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+// export async function fetchDepartments() {
+//   return sequelize_misc.query(
+//     `
+//     SELECT DISTINCT
+//       DEPT_CD AS "deptCode",
+//       DEPT AS "department"
+//     FROM MISC.M_EMPLOYEE_ALL
+//     WHERE DEPT_CD IS NOT NULL
+//       AND DEPT IS NOT NULL
+//       AND RND_STATUS = 'ACTIVE'
+//     ORDER BY DEPT
+//     `,
+//     {
+//       type: QueryTypes.SELECT,
+//     },
+//   );
+// }
+
+
+export async function fetchAllEmployees() {
+  const rows = await Employee.findAll({
+    where: { rndStatus: "ACTIVE", isEmployee: 1 },
+    order: [["name", "ASC"]],
+    raw: true,
+  });
+  return rows;
 }
+
 
 export async function fetchNormalApproverAuthorizations() {
   const rows = await VisitorGatepassHods.findAll({
+    include: [
+      {
+        model: Employee,
+          as: "approver",
+      },
+    ],
     order: [["rowId", "DESC"]],
   });
 
@@ -105,6 +173,12 @@ export async function fetchNormalApproverAuthorizations() {
 
 export async function fetchVehicleApproverAuthorizations() {
   const rows = await VisitorGatepassVehicleHods.findAll({
+    include : [
+      {
+        model: Employee,
+          as: "approver",
+      },
+    ],
     order: [["rowId", "DESC"]],
   });
 
