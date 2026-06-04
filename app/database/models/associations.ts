@@ -42,3 +42,11 @@ if (!VisitorMultiple.associations.visitedEmployee) {
     as: "visitedEmployee",
   });
 }
+if (!VisitorMultiple.associations.approver) {
+  VisitorMultiple.belongsTo(Employee, {
+    foreignKey: "approvingAuth",
+    targetKey: "empNo",
+    as: "approver",
+  });
+}
+

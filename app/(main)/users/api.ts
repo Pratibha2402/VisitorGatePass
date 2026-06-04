@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { Employee } from "@/app/database/models/Employee";
 import { GATEPASS_APPROVAL_STATUS } from "@/app/enum";
 import { sendVisitorGatePassCreatedMail } from "@/app/mail/gatepass-created";
+import { sendAutoApprovedGatePassMail } from "@/app/mail/gatepass-security-notification";
 
 
 
@@ -171,6 +172,12 @@ export async function fetchVisitorRequests(empNo : string) {
       attributes: ["username", "name", "designation", "department"],
       required: false,
     },
+    {
+      model: Employee,
+      as: "approver",
+      attributes: ["empNo", "name"],
+      required: false,
+    },
   ],
   order: [["gpCreationDate", "DESC"]],
 
@@ -240,10 +247,10 @@ function toDbDate(value: string | null) {
 }
 
 async function getNextVisitorId(transaction: any) {
-  const result = await sequelize_misc.query<{ nextVid: number }>(
+  const result = await sequelize_misc.query<{ vId: number }>(
     `
-    SELECT NVL(MAX(V_ID), 0) + 1 AS "nextVid"
-    FROM MISC.VISITORMULTIPLE
+    SELECT MISC.VISITOR_ID_SEQ.NEXTVAL AS "vId"
+    FROM DUAL
     `,
     {
       type: QueryTypes.SELECT,
@@ -251,7 +258,7 @@ async function getNextVisitorId(transaction: any) {
     },
   );
 
-  return result[0].nextVid;
+  return result[0].vId;
 }
 
 export async function createVisitorRequests(payload: any) {
@@ -260,7 +267,7 @@ export async function createVisitorRequests(payload: any) {
 
   try {
     const { officerDetails, visitors } = payload;
-  const autoApproved = officerDetails.autoApproved === true;
+  const requiresmanualapproval = officerDetails.approval_status === true;
     if (!visitors?.length) {
       await transaction.rollback();
 
@@ -271,14 +278,15 @@ export async function createVisitorRequests(payload: any) {
       };
     }
 
-    const firstVid = await getNextVisitorId(transaction);
-    const visitorIds: number[] = [];
+    // const firstVid = await getNextVisitorId(transaction);
+     const visitorIds: number[] = [];
 
-    for (let index = 0; index < visitors.length; index++) {
-      const visitor = visitors[index];
-      const vId = firstVid + index;
-
-      visitorIds.push(vId);
+      // for (let index = 0; index < visitors.length; index++) {
+      // const visitor = visitors[index];
+      // const vId = firstVid + index;
+        for (const visitor of visitors) {
+          const vId = await getNextVisitorId(transaction);
+          visitorIds.push(vId);
 
       await VisitorMultiple.create(
         {
@@ -301,7 +309,7 @@ export async function createVisitorRequests(payload: any) {
           ? GATEPASS_APPROVAL_STATUS.PENDING
           : GATEPASS_APPROVAL_STATUS.APPROVED,
 
-          approvalDate: autoApproved ? new Date() : null,
+          approvalDate: requiresmanualapproval ? null: new Date(),
           baggageStatus: visitor.laptopcarry === "Yes" ? 1 : 0,
           gpCreationDate: new Date(),
         },
@@ -322,13 +330,20 @@ export async function createVisitorRequests(payload: any) {
     }
 await transaction.commit();
 
-  if (!autoApproved) {
-    try {
-      await sendVisitorGatePassCreatedMail(visitorIds);
-    } catch (mailError) {
-      console.error("Visitor gate pass approval mail failed:", mailError);
-    }
-  }
+  // if (!autoApproved) {
+  //   try {
+  //     await sendVisitorGatePassCreatedMail(visitorIds);
+  //   } catch (mailError) {
+  //     console.error("Visitor gate pass approval mail failed:", mailError);
+  //   }
+  // }
+
+    if (requiresmanualapproval) {
+    
+    await sendVisitorGatePassCreatedMail(visitorIds);
+  } else {
+    await sendAutoApprovedGatePassMail(visitorIds);
+      }
 
    return {
       success: true,

@@ -9,6 +9,7 @@ import { VisitorGatepassVehicleHods } from "@/app/database/models/VisitorGatePas
 import { getSession } from "@/app/api/auth/get-session";
 import { hasRole } from "@/app/api";
 import { ADMIN_APPROVAL_STATUS, GATEPASS_APPROVAL_STATUS, USER_ROLES } from "@/app/enum";
+import { sendAdminApprovedGatePassMail } from "@/app/mail/gatepass-security-notification";
 
 
 async function assertAdmin() {
@@ -42,6 +43,8 @@ export async function adminApproveGatePass(vId: number) {
     approvalDate: new Date(),
   });
 
+  await sendAdminApprovedGatePassMail([vId]);
+  
   revalidatePath("/admin/approvals");
   revalidatePath("/admin/reports");
 

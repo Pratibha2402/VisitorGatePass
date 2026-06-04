@@ -66,6 +66,12 @@ export async function fetchPendingGatePassApprovals(empNo: string) {
         attributes: ["username", "name", "designation", "department"],
         required: false,
       },
+      {
+        model: Employee,
+        as: "approver",
+        attributes: ["empNo", "name"],
+        required: false,
+      },
     ],
     order: [["gpCreationDate", "DESC"]],
   });
@@ -89,6 +95,12 @@ export async function fetchApprovedGatePassRequests(empNo: string) {
         model: Employee,
         as: "visitedEmployee",
         attributes: ["username", "name", "designation", "department"],
+        required: false,
+      },
+      {
+        model: Employee,
+        as: "approver",
+        attributes: ["empNo", "name"],
         required: false,
       },
     ],

@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import { Divider, Typography } from "@/app/core-components";
 import Stack from "@mui/material/Stack";
 import GatePassStatusChip from "@/app/components/GatePassStatusChip";
+import { Employee } from "@/app/database/models/Employee";
 
 export default function GatePassDetailsContent({
   visitor,
@@ -66,6 +67,7 @@ export default function GatePassDetailsContent({
       <InfoSection title="Officer Information">
         <InfoItem label="Created By" value={visitor.visitedEmployee?.name} />
         <InfoItem label="Intercom" value={visitor.empVisitedIcom} />
+        <InfoItem label="Approving Authority" value={visitor.approver?.name} />
       </InfoSection>
     </Stack>
   );

@@ -51,6 +51,7 @@ export default function VisitorDetails({
     page: Number(searchParams.get("page") ?? 0),
     pageSize: Number(searchParams.get("pageSize") ?? 10),
   });
+
   const [selectedVisitor, setSelectedVisitor] = useState<any | null>(null);
   //   useEffect(() => {
   //     async function loadVisitors() {

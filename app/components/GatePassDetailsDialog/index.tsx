@@ -13,6 +13,7 @@ import {
 } from "@/app/core-components";
 import Stack from "@mui/material/Stack";
 import GatePassStatusChip from "@/app/components/GatePassStatusChip";
+import { Employee } from "@/app/database/models/Employee";
 
 export default function GatePassDetailsDialog({
   open,
@@ -32,6 +33,9 @@ export default function GatePassDetailsDialog({
   actions?: ReactNode;
 }) {
   if (!visitor) return null;
+  const approver = Employee.findOne({
+    where: { empId: visitor.approvingAuth },
+  });
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -97,6 +101,10 @@ export default function GatePassDetailsDialog({
               value={visitor.visitedEmployee?.name}
             />
             <InfoItem label="Intercom" value={visitor.empVisitedIcom} />
+            <InfoItem
+              label="Approving Authority"
+              value={visitor.approverAuth}
+            />
           </InfoSection>
         </Stack>
       </DialogContent>

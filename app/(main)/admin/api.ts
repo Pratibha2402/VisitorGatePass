@@ -23,6 +23,12 @@ const includeVisitorDetails = [
     attributes: ["empNo", "username", "name", "designation", "department"],
     required: false,
   },
+   {
+    model: Employee,
+    as: "approver",
+    attributes: ["empNo", "name"],
+    required: false,
+    },
 ];
 
 export async function fetchAllPendingGatePassesForAdmin() {

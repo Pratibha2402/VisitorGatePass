@@ -6,6 +6,7 @@ import { GATEPASS_APPROVAL_STATUS, USER_ROLES } from "@/app/enum";
 import { revalidatePath } from "next/cache";
 import { Op } from "sequelize";
 import { hasRole } from "@/app/api";
+import { sendApproverApprovedGatePassMail } from "@/app/mail/gatepass-security-notification";
 
 export async function approveGatePass(vId: number) {
   const hasAccess = await hasRole([USER_ROLES.APPROVER]);
@@ -39,8 +40,10 @@ export async function approveGatePass(vId: number) {
     approvalDate: new Date(),
   });
 
-revalidatePath("/approver/pending-approvals");
-revalidatePath("/approver/approved-requests");
+  await sendApproverApprovedGatePassMail([vId]);
+
+  revalidatePath("/approver/pending-approvals");
+  revalidatePath("/approver/approved-requests");
 
   return {
     success: true,
@@ -124,6 +127,14 @@ export async function approveGatePassMany(vIds: number[]) {
       },
     },
   );
+
+    for (const vId of vIds) {
+    try {
+      await sendApproverApprovedGatePassMail([vId]);
+    } catch (mailError) {
+      console.error(`Approver approved mail failed for V_ID ${vId}:`, mailError);
+    }
+  }
 
   revalidatePath("/approver/pending-approvals");
   revalidatePath("/approver/approved-requests");
