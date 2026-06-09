@@ -116,15 +116,15 @@ async function sendSecurityGatePassMail({
     const finalto = [DG_SECURITY_EMAIL];
     // TESTING ONLY
     const to = ["pratibhac@indianoil.in"];
-    const cc: string[] = [];
-    const finalcc = uniqueEmails([
+    //const cc: string[] = [];
+    const cc = uniqueEmails([
       ...adminEmailIds,
       initiator?.emailId,
       includeApproverInCc ? approver?.emailId : null,
     ]).filter((email) => !to.includes(email));
 
     console.log("Final To:", finalto);
-    console.log("Final CC:", finalcc);
+    console.log("Final CC:", cc);
 
 
     const visitorRowsHtml = buildVisitorRowsHtml(gatePassRows);

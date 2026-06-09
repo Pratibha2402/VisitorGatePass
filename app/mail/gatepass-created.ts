@@ -101,17 +101,17 @@ const adminEmailIds = adminEmployees
 
 
   const finalto = approver?.emailId ? [approver.emailId] : [];
-  const finalcc = uniqueEmails([
+  const cc = uniqueEmails([
     ...adminEmailIds,
     initiator?.emailId,
   ]).filter((email) => !finalto.includes(email));
 
 // TESTING ONLY
 const to = ["pratibhac@indianoil.in"];
-const cc: string[] = [];
+//const cc: string[] = [];
 
 console.log("Final To:", finalto);
-console.log("Final CC:", finalcc);
+console.log("Final CC:", cc);
 
   if (!to.length) {
     throw new Error("Approver email not found for visitor gate pass.");
